@@ -8,6 +8,8 @@ import 'package:rgwin_crm/features/auth/presentation/auth_state.dart';
 import 'package:rgwin_crm/features/auth/presentation/login_screen.dart';
 import 'package:rgwin_crm/features/dashboard/presentation/dashboard_shell_screen.dart';
 import 'package:rgwin_crm/features/doctors/presentation/doctors_shell_screen.dart';
+import 'package:rgwin_crm/features/doctors/presentation/add_edit_doctor_screen.dart';
+import 'package:rgwin_crm/features/doctors/presentation/doctor_detail_screen.dart';
 import 'package:rgwin_crm/features/visits/presentation/visits_shell_screen.dart';
 import 'package:rgwin_crm/features/products/presentation/products_shell_screen.dart';
 import 'package:rgwin_crm/features/followups/presentation/followups_shell_screen.dart';
@@ -131,6 +133,28 @@ GoRouter createAppRouter({
               GoRoute(
                 path: RoutePaths.doctors,
                 builder: (context, state) => const DoctorsShellScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'add',
+                    builder: (context, state) => const AddEditDoctorScreen(),
+                  ),
+                  GoRoute(
+                    path: ':id',
+                    builder: (context, state) {
+                      final id = state.pathParameters['id']!;
+                      return DoctorDetailScreen(doctorId: id);
+                    },
+                    routes: [
+                      GoRoute(
+                        path: 'edit',
+                        builder: (context, state) {
+                          final id = state.pathParameters['id']!;
+                          return AddEditDoctorScreen(doctorId: id);
+                        },
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ],
           ),
