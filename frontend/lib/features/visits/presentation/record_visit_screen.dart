@@ -178,24 +178,30 @@ class _RecordVisitScreenState extends ConsumerState<RecordVisitScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text("Log Doctor Visit"), centerTitle: false),
+      appBar: AppBar(
+        title: const Text("Log Doctor Visit"),
+        backgroundColor: AppColors.background,
+        centerTitle: false,
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSpacing.lg),
           child: Form(
             key: _formKey,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 1. Select Doctor
+                // 1. Doctor Selection Card
                 const SectionHeader(
                   title: "Doctor & Clinic",
-                  subtitle: "Who did you visit?",
+                  subtitle: "Select the doctor you are detailing to",
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 AppCard(
+                  isGlass: true,
                   child: DropdownButtonFormField<String>(
-                    initialValue: _selectedDoctorId,
+                    dropdownColor: AppColors.surfaceElevated,
+                    value: _selectedDoctorId,
                     decoration: const InputDecoration(
                       labelText: "Select Doctor",
                       prefixIcon: Icon(Icons.person_outline, size: 20),

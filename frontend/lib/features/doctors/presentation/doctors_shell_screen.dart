@@ -9,6 +9,7 @@ import 'package:rgwin_crm/core/widgets/app_empty_state.dart';
 import 'package:rgwin_crm/core/widgets/app_error_state.dart';
 import 'package:rgwin_crm/core/widgets/app_loading_indicator.dart';
 import 'package:rgwin_crm/core/widgets/app_text_field.dart';
+import 'package:rgwin_crm/core/widgets/spring_button.dart';
 import 'package:rgwin_crm/core/widgets/status_chip.dart';
 import 'package:rgwin_crm/features/doctors/domain/models/area_model.dart';
 import 'package:rgwin_crm/features/doctors/domain/models/association_model.dart';
@@ -34,7 +35,7 @@ class _DoctorsShellScreenState extends ConsumerState<DoctorsShellScreen> {
   void _showFilterModal(BuildContext context, DoctorState state) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surfaceElevated,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
       ),
@@ -492,42 +493,96 @@ class _DoctorCard extends StatelessWidget {
       doctor.specialization,
     ].join(" • ");
 
+    final initials = doctor.name
+        .replaceFirst(RegExp(r'^Dr\.\s*', caseSensitive: false), '')
+        .trim();
+    final initialChar = initials.isNotEmpty ? initials[0].toUpperCase() : 'D';
+
     return AppCard(
       onTap: onTap,
+      isGlass: true,
+      padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Row 1: Doctor Name, Status & Popup Menu
+          // Row 1: Doctor Avatar, Name, Status & Popup Menu
           Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        doctor.name,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textPrimary,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  gradient: AppColors.primaryGradient,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.primaryGlow.withOpacity(0.4),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withOpacity(0.3),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
                     ),
-                    const SizedBox(width: AppSpacing.xs),
-                    if (doctor.syncState != 'synced') ...[
-                      const Icon(
-                        Icons.sync,
-                        size: 14,
-                        color: AppColors.warning,
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    initialChar,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 16,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            doctor.name,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textPrimary,
+                              letterSpacing: -0.2,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (doctor.syncState != 'synced') ...[
+                          const SizedBox(width: 4),
+                          const Icon(
+                            Icons.sync,
+                            size: 14,
+                            color: AppColors.warning,
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      qualAndSpec,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primaryGlow,
                       ),
-                      const SizedBox(width: 4),
-                    ],
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ],
                 ),
               ),
+              const SizedBox(width: AppSpacing.xs),
               StatusChip.fromStatus(doctor.isActive ? "ACTIVE" : "INACTIVE"),
               PopupMenuButton<String>(
                 icon: const Icon(
@@ -536,6 +591,7 @@ class _DoctorCard extends StatelessWidget {
                   color: AppColors.textSecondary,
                 ),
                 padding: EdgeInsets.zero,
+                color: AppColors.surfaceElevated,
                 itemBuilder: (context) => [
                   const PopupMenuItem(
                     value: "view",
@@ -565,37 +621,24 @@ class _DoctorCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: AppSpacing.sm),
 
-          // Row 2: Qualification & Specialization
-          Text(
-            qualAndSpec,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: AppColors.primaryDark,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 4),
-
-          // Row 3: Clinic / Medical
+          // Row 2: Clinic & Area Details
           if (doctor.clinicName != null && doctor.clinicName!.isNotEmpty) ...[
             Row(
               children: [
                 const Icon(
-                  Icons.local_hospital_outlined,
+                  Icons.local_hospital_rounded,
                   size: 14,
                   color: AppColors.textMuted,
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 5),
                 Expanded(
                   child: Text(
                     doctor.clinicName!,
                     style: const TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textPrimary,
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
                       fontWeight: FontWeight.w500,
                     ),
                     maxLines: 1,
@@ -604,24 +647,23 @@ class _DoctorCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 3),
           ],
 
-          // Row 4: Territory Area
           if (doctor.areaName != null) ...[
             Row(
               children: [
                 const Icon(
-                  Icons.location_on_outlined,
+                  Icons.location_on_rounded,
                   size: 14,
                   color: AppColors.textMuted,
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 5),
                 Text(
                   doctor.areaName!,
                   style: const TextStyle(
                     fontSize: 12,
-                    color: AppColors.textSecondary,
+                    color: AppColors.textMuted,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -630,13 +672,13 @@ class _DoctorCard extends StatelessWidget {
             const SizedBox(height: 6),
           ],
 
-          const Divider(height: AppSpacing.sm),
+          const Divider(height: AppSpacing.sm, color: AppColors.border),
 
           // Action Row: 📞 Call & View Profile
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              InkWell(
+              SpringButton(
                 onTap: () {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -645,55 +687,71 @@ class _DoctorCard extends StatelessWidget {
                     ),
                   );
                 },
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                child: Padding(
+                scaleDown: 0.94,
+                child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.xs,
+                    horizontal: 8,
                     vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.success.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    border: Border.all(
+                      color: AppColors.success.withOpacity(0.3),
+                      width: 1,
+                    ),
                   ),
                   child: Row(
                     children: [
                       const Icon(
-                        Icons.phone_outlined,
-                        size: 14,
-                        color: AppColors.primaryDark,
+                        Icons.phone_rounded,
+                        size: 13,
+                        color: AppColors.success,
                       ),
                       const SizedBox(width: 4),
                       Text(
                         doctor.phone,
                         style: const TextStyle(
-                          fontSize: 12,
+                          fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.primaryDark,
+                          color: AppColors.success,
                         ),
                       ),
                     ],
                   ),
                 ),
               ),
-              InkWell(
+              SpringButton(
                 onTap: onTap,
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: AppSpacing.xs,
+                scaleDown: 0.94,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
                     vertical: 4,
                   ),
-                  child: Row(
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    border: Border.all(
+                      color: AppColors.primaryGlow.withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: const Row(
                     children: [
                       Text(
                         "View Profile",
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.primaryDark,
+                          color: AppColors.primaryGlow,
                         ),
                       ),
                       SizedBox(width: 2),
                       Icon(
-                        Icons.chevron_right,
-                        size: 16,
-                        color: AppColors.primaryDark,
+                        Icons.chevron_right_rounded,
+                        size: 14,
+                        color: AppColors.primaryGlow,
                       ),
                     ],
                   ),

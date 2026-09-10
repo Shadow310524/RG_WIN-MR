@@ -6,6 +6,7 @@ import 'package:rgwin_crm/core/theme/app_spacing.dart';
 import 'package:rgwin_crm/core/widgets/app_badge.dart';
 import 'package:rgwin_crm/core/widgets/app_card.dart';
 import 'package:rgwin_crm/core/widgets/section_header.dart';
+import 'package:rgwin_crm/core/widgets/spring_button.dart';
 import 'package:rgwin_crm/features/auth/presentation/auth_controller.dart';
 
 class MoreShellScreen extends ConsumerWidget {
@@ -26,19 +27,37 @@ class MoreShellScreen extends ConsumerWidget {
             children: [
               // User Profile Banner Card
               AppCard(
+                isGlass: true,
                 child: Row(
                   children: [
-                    CircleAvatar(
-                      radius: 28,
-                      backgroundColor: AppColors.primaryLight,
-                      child: Text(
-                        user?.fullName.isNotEmpty == true
-                            ? user!.fullName.substring(0, 1).toUpperCase()
-                            : "U",
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.primaryDark,
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        gradient: AppColors.primaryGradient,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AppColors.primaryGlow.withOpacity(0.4),
+                          width: 1.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withOpacity(0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          user?.fullName.isNotEmpty == true
+                              ? user!.fullName.substring(0, 1).toUpperCase()
+                              : "U",
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
@@ -91,6 +110,7 @@ class MoreShellScreen extends ConsumerWidget {
               const SectionHeader(title: "CRM Modules & Tools"),
               const SizedBox(height: AppSpacing.xs),
               AppCard(
+                isGlass: true,
                 padding: EdgeInsets.zero,
                 child: Column(
                   children: [
@@ -202,31 +222,47 @@ class _MenuTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
+    return SpringButton(
       onTap: onTap,
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: (iconColor ?? AppColors.primaryDark).withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(AppRadius.sm),
+      scaleDown: 0.98,
+      child: ListTile(
+        onTap: onTap,
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: (iconColor ?? AppColors.primaryGlow).withOpacity(0.15),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            border: Border.all(
+              color: (iconColor ?? AppColors.primaryGlow).withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          child: Icon(
+            icon,
+            size: 20,
+            color: iconColor ?? AppColors.primaryGlow,
+          ),
         ),
-        child: Icon(icon, size: 20, color: iconColor ?? AppColors.primaryDark),
-      ),
-      title: Text(
-        title,
-        style: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w700,
-          color: textColor ?? AppColors.textPrimary,
+        title: Text(
+          title,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: textColor ?? AppColors.textPrimary,
+          ),
         ),
+        subtitle: Text(
+          subtitle,
+          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+        ),
+        trailing:
+            trailing ??
+            const Icon(
+              Icons.chevron_right_rounded,
+              size: 18,
+              color: AppColors.textMuted,
+            ),
       ),
-      subtitle: Text(
-        subtitle,
-        style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-      ),
-      trailing:
-          trailing ??
-          const Icon(Icons.chevron_right, size: 18, color: AppColors.textMuted),
     );
   }
 }

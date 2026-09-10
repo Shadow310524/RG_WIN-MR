@@ -60,7 +60,7 @@ class DoctorDetailScreen extends ConsumerWidget {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text("Doctor Profile"),
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.background,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
         actions: [
@@ -79,6 +79,7 @@ class DoctorDetailScreen extends ConsumerWidget {
             children: [
               // 1. Profile Header Card
               AppCard(
+                isGlass: true,
                 child: Column(
                   children: [
                     Row(
@@ -95,7 +96,7 @@ class DoctorDetailScreen extends ConsumerWidget {
                                       .toUpperCase()
                                 : 'D',
                             style: const TextStyle(
-                              color: AppColors.primary,
+                              color: AppColors.primaryGlow,
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
                             ),

@@ -7,6 +7,7 @@ import 'package:rgwin_crm/core/theme/app_spacing.dart';
 import 'package:rgwin_crm/core/widgets/app_card.dart';
 import 'package:rgwin_crm/core/widgets/app_empty_state.dart';
 import 'package:rgwin_crm/core/widgets/app_loading_indicator.dart';
+import 'package:rgwin_crm/core/widgets/spring_button.dart';
 import 'package:rgwin_crm/core/widgets/status_chip.dart';
 import 'package:rgwin_crm/features/visits/domain/models/visit_model.dart';
 import 'package:rgwin_crm/features/visits/presentation/visit_controller.dart';
@@ -152,26 +153,43 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FilterChip(
-      label: Text(
-        label,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-          color: isSelected ? AppColors.primaryDark : AppColors.textSecondary,
+    return SpringButton(
+      onTap: onTap,
+      scaleDown: 0.94,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOutCubic,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          gradient: isSelected ? AppColors.primaryGradient : null,
+          color: isSelected ? null : AppColors.surfaceElevated,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          border: Border.all(
+            color: isSelected
+                ? AppColors.primaryGlow.withOpacity(0.5)
+                : AppColors.border,
+            width: 1,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.35),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+            color: isSelected ? Colors.white : AppColors.textSecondary,
+            letterSpacing: -0.1,
+          ),
         ),
       ),
-      selected: isSelected,
-      backgroundColor: AppColors.surface,
-      selectedColor: AppColors.primaryLight,
-      checkmarkColor: AppColors.primaryDark,
-      side: BorderSide(
-        color: isSelected ? AppColors.primaryDark : AppColors.border,
-      ),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.pill),
-      ),
-      onSelected: (_) => onTap(),
     );
   }
 }
@@ -183,10 +201,12 @@ class _VisitCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final timeStr = DateFormat('hh:mm a').format(visit.visitDatetime);
-    final dateStr = DateFormat('dd MMM yyyy').format(visit.visitDatetime);
+    final timeStr = DateFormat('h:mm a').format(visit.visitDatetime);
+    final dateStr = DateFormat('EEE, d MMM yyyy').format(visit.visitDatetime);
 
     return AppCard(
+      isGlass: true,
+      padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -198,7 +218,11 @@ class _VisitCard extends StatelessWidget {
                 height: 44,
                 decoration: BoxDecoration(
                   color: AppColors.primaryLight,
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  border: Border.all(
+                    color: AppColors.primaryGlow.withOpacity(0.3),
+                    width: 1,
+                  ),
                 ),
                 child: Center(
                   child: Column(

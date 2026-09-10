@@ -22,7 +22,7 @@ class SalesShellScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.primaryGlow,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
         label: const Text(
@@ -72,7 +72,7 @@ class SalesShellScreen extends ConsumerWidget {
                     value:
                         "₹${NumberFormat('#,##,###').format(state.totalPurchaseAmount)}",
                     icon: Icons.account_balance_wallet_outlined,
-                    accentColor: AppColors.primaryDark,
+                    accentColor: AppColors.primaryGlow,
                     subtitle: "${state.purchases.length} recorded entries",
                   ),
                   MetricCard(
@@ -170,6 +170,7 @@ class SalesShellScreen extends ConsumerWidget {
                   itemBuilder: (context, index) {
                     final item = state.purchases[index];
                     return AppCard(
+                      isGlass: true,
                       child: Row(
                         children: [
                           Container(
@@ -177,7 +178,7 @@ class SalesShellScreen extends ConsumerWidget {
                             height: 44,
                             decoration: BoxDecoration(
                               color: AppColors.primaryLight,
-                              borderRadius: BorderRadius.circular(AppRadius.sm),
+                              borderRadius: BorderRadius.circular(AppRadius.md),
                             ),
                             child: const Center(
                               child: Icon(

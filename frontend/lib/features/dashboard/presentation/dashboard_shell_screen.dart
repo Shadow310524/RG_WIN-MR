@@ -8,6 +8,7 @@ import 'package:rgwin_crm/core/widgets/app_card.dart';
 import 'package:rgwin_crm/core/widgets/metric_card.dart';
 import 'package:rgwin_crm/core/widgets/quick_action.dart';
 import 'package:rgwin_crm/core/widgets/section_header.dart';
+import 'package:rgwin_crm/core/widgets/spring_button.dart';
 import 'package:rgwin_crm/core/widgets/status_chip.dart';
 import 'package:rgwin_crm/features/auth/presentation/auth_controller.dart';
 import 'package:rgwin_crm/features/doctors/presentation/doctor_controller.dart';
@@ -22,8 +23,26 @@ class DashboardShellScreen extends ConsumerStatefulWidget {
       _DashboardShellScreenState();
 }
 
-class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen> {
+class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen>
+    with SingleTickerProviderStateMixin {
   String _selectedPeriod = "TODAY"; // "TODAY", "WEEK", "MONTH"
+  late final AnimationController _animController;
+
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 750),
+    );
+    _animController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
+  }
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
@@ -44,6 +63,8 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen> {
     final todayVisits = visitState.todayVisits;
 
     return RefreshIndicator(
+      color: AppColors.primaryGlow,
+      backgroundColor: AppColors.surfaceElevated,
       onRefresh: () async {
         await Future.wait([
           ref.read(visitControllerProvider.notifier).loadVisits(),
@@ -53,494 +74,746 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen> {
       },
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.lg,
+          AppSpacing.lg,
+          100, // Padding for floating glass dock
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. Executive / MR Header
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "${_getGreeting()}, $userName 👋",
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textPrimary,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      const Text(
-                        "Field Sales Overview",
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: AppColors.textSecondary,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+            // 1. Executive MR Command Header
+            _buildAnimatedItem(
+              intervalStart: 0.0,
+              intervalEnd: 0.4,
+              child: _buildExecutiveHeader(userName, authState.user?.role),
             ),
             const SizedBox(height: AppSpacing.md),
 
-            // Period Selector Chip Group
-            Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(AppRadius.pill),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _PeriodButton(
-                    label: "Today",
-                    isSelected: _selectedPeriod == "TODAY",
-                    onTap: () => setState(() => _selectedPeriod = "TODAY"),
-                  ),
-                  _PeriodButton(
-                    label: "This Week",
-                    isSelected: _selectedPeriod == "WEEK",
-                    onTap: () => setState(() => _selectedPeriod = "WEEK"),
-                  ),
-                  _PeriodButton(
-                    label: "This Month",
-                    isSelected: _selectedPeriod == "MONTH",
-                    onTap: () => setState(() => _selectedPeriod = "MONTH"),
-                  ),
-                ],
-              ),
+            // Period Selector Chip Group with smooth animation
+            _buildAnimatedItem(
+              intervalStart: 0.1,
+              intervalEnd: 0.5,
+              child: _buildPeriodSelector(),
             ),
             const SizedBox(height: AppSpacing.lg),
 
-            // 2. Mobile KPI Cards (2x2 Grid)
-            GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisSpacing: AppSpacing.md,
-              mainAxisSpacing: AppSpacing.md,
-              childAspectRatio: 1.35,
-              children: [
-                MetricCard(
-                  title: "Today's Visits",
-                  value: "${todayVisits.length}",
-                  icon: Icons.location_on_outlined,
-                  accentColor: AppColors.primaryDark,
-                  subtitle: todayVisits.isEmpty
-                      ? "No visits yet"
-                      : "Scheduled / Done",
-                  onTap: () => context.go('/visits'),
-                ),
-                MetricCard(
-                  title: "Purchase Value",
-                  value:
-                      "₹${NumberFormat('#,##,###').format(purchaseState.totalPurchaseAmount)}",
-                  icon: Icons.account_balance_wallet_outlined,
-                  accentColor: AppColors.primary,
-                  subtitle: "Overall gross value",
-                  onTap: () => context.go('/sales'),
-                ),
-                MetricCard(
-                  title: "Revenue",
-                  value:
-                      "₹${NumberFormat('#,##,###').format(purchaseState.totalRevenue)}",
-                  icon: Icons.currency_rupee,
-                  accentColor: AppColors.success,
-                  subtitle: "Realized sales",
-                  onTap: () => context.go('/sales'),
-                ),
-                const MetricCard(
-                  title: "Profit / Loss",
-                  value: "—",
-                  icon: Icons.query_stats,
-                  accentColor: AppColors.textMuted,
-                  isUnavailable: true,
-                  subtitle: "Insufficient data",
-                ),
-              ],
+            // 2. Luminous Executive Commercial Hero Cockpit
+            _buildAnimatedItem(
+              intervalStart: 0.2,
+              intervalEnd: 0.6,
+              child: _buildHeroCommercialCockpit(purchaseState, todayVisits),
             ),
             const SizedBox(height: AppSpacing.xl),
 
-            // 3. One-Hand Quick Actions (4 items)
-            const SectionHeader(
-              title: "Quick Actions",
-              subtitle: "Common field sales tasks",
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            AppCard(
-              padding: const EdgeInsets.symmetric(
-                vertical: AppSpacing.md,
-                horizontal: AppSpacing.sm,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Expanded(
-                    child: QuickActionItem(
-                      label: "Add Visit",
-                      icon: Icons.add_location_alt_outlined,
-                      color: AppColors.primaryDark,
-                      backgroundColor: AppColors.primaryLight,
-                      onTap: () => context.go('/visits/add'),
-                    ),
-                  ),
-                  Expanded(
-                    child: QuickActionItem(
-                      label: "Add Doctor",
-                      icon: Icons.person_add_alt_1_outlined,
-                      color: AppColors.secondaryDark,
-                      backgroundColor: AppColors.secondaryLight,
-                      onTap: () => context.go('/doctors/add'),
-                    ),
-                  ),
-                  Expanded(
-                    child: QuickActionItem(
-                      label: "Purchase",
-                      icon: Icons.receipt_long_outlined,
-                      color: AppColors.success,
-                      backgroundColor: AppColors.successLight,
-                      onTap: () => context.go('/sales/record'),
-                    ),
-                  ),
-                  Expanded(
-                    child: QuickActionItem(
-                      label: "Expense",
-                      icon: Icons.account_balance_wallet_outlined,
-                      color: AppColors.warning,
-                      backgroundColor: AppColors.warningLight,
-                      onTap: () => context.go('/expenses/add'),
-                    ),
-                  ),
-                ],
-              ),
+            // 3. Tactile Bento Quick Action Dock (4 items)
+            _buildAnimatedItem(
+              intervalStart: 0.35,
+              intervalEnd: 0.75,
+              child: _buildBentoQuickActions(),
             ),
             const SizedBox(height: AppSpacing.xl),
 
-            // 4. Today's Activity / Visits Schedule
-            SectionHeader(
-              title: "Today's Activity",
-              subtitle: "${todayVisits.length} visits on schedule",
-              actionLabel: "View all",
-              onAction: () => context.go('/visits'),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            if (todayVisits.isEmpty)
-              AppCard(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryVeryLight,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.calendar_today_outlined,
-                          color: AppColors.primaryDark,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.md),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
-                            Text(
-                              "No visits recorded today",
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                            SizedBox(height: 2),
-                            Text(
-                              "Tap 'Add Visit' to log your first interaction.",
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              )
-            else
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: todayVisits.length > 3 ? 3 : todayVisits.length,
-                separatorBuilder: (context, index) =>
-                    const SizedBox(height: AppSpacing.sm),
-                itemBuilder: (context, index) {
-                  final v = todayVisits[index];
-                  return AppCard(
-                    onTap: () => context.go('/doctors/${v.doctorId}'),
-                    child: Row(
-                      children: [
-                        Text(
-                          DateFormat('hh:mm a').format(v.visitDatetime),
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.primaryDark,
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.md),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                v.doctorName ?? "Dr. Medical Professional",
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                              Text(
-                                v.clinicName ?? "General Clinic",
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        StatusChip.fromStatus(v.status),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            const SizedBox(height: AppSpacing.xl),
-
-            // 5. Sales Snapshot
-            const SectionHeader(
-              title: "Sales Snapshot",
-              subtitle: "Commercial performance & PTS summary",
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            AppCard(
-              child: Column(
-                children: [
-                  _SnapshotRow(
-                    label: "Purchase Value",
-                    value:
-                        "₹${NumberFormat('#,##,###').format(purchaseState.totalPurchaseAmount)}",
-                    isHighlight: true,
-                  ),
-                  const Divider(height: AppSpacing.md),
-                  _SnapshotRow(
-                    label: "Revenue",
-                    value:
-                        "₹${NumberFormat('#,##,###').format(purchaseState.totalRevenue)}",
-                  ),
-                  const Divider(height: AppSpacing.md),
-                  const _SnapshotRow(
-                    label: "PTS",
-                    value: "Calculating / Pending",
-                    isMuted: true,
-                  ),
-                  const Divider(height: AppSpacing.md),
-                  const _SnapshotRow(
-                    label: "Profit / Loss",
-                    value: "Profit/Loss unavailable",
-                    isMuted: true,
-                  ),
-                ],
-              ),
+            // 4. Today's Mission Radar (Visits Schedule)
+            _buildAnimatedItem(
+              intervalStart: 0.5,
+              intervalEnd: 0.9,
+              child: _buildMissionRadar(todayVisits),
             ),
             const SizedBox(height: AppSpacing.xl),
 
-            // 6. Top Doctors / Medicals
-            SectionHeader(
-              title: "Top Purchase Doctors",
-              subtitle: "Territory high-value relationships",
-              actionLabel: "View all",
-              onAction: () => context.go('/doctors'),
+            // 5. Territory Performance Matrix
+            _buildAnimatedItem(
+              intervalStart: 0.65,
+              intervalEnd: 1.0,
+              child: _buildTerritoryMatrix(doctorState),
             ),
-            const SizedBox(height: AppSpacing.sm),
-            if (doctorState.doctors.isEmpty)
-              const AppCard(
-                child: Padding(
-                  padding: EdgeInsets.all(AppSpacing.md),
-                  child: Text(
-                    "No doctor relationships enrolled yet.",
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ),
-              )
-            else
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: doctorState.doctors.length > 3
-                    ? 3
-                    : doctorState.doctors.length,
-                separatorBuilder: (context, index) =>
-                    const SizedBox(height: AppSpacing.sm),
-                itemBuilder: (context, index) {
-                  final doc = doctorState.doctors[index];
-                  final docPurchases = purchaseState.purchases
-                      .where((p) => p.doctorId == doc.id)
-                      .toList();
-                  final total = docPurchases.fold(
-                    0.0,
-                    (sum, p) => sum + p.totalAmount,
-                  );
+            const SizedBox(height: AppSpacing.xl),
 
-                  return AppCard(
-                    onTap: () => context.go('/doctors/${doc.id}'),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 16,
-                          backgroundColor: AppColors.primaryLight,
-                          child: Text(
-                            "${index + 1}",
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.primaryDark,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.md),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                doc.name,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                              Text(
-                                doc.clinicName ?? doc.specialization,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              total > 0
-                                  ? "₹${NumberFormat('#,##,###').format(total)}"
-                                  : "Active",
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w800,
-                                color: total > 0
-                                    ? AppColors.primaryDark
-                                    : AppColors.textSecondary,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            const Text(
-                              "View Profile →",
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            const SizedBox(height: AppSpacing.xxl),
+            // 6. Commercial Health & P&L Snapshot
+            _buildCommercialSnapshot(purchaseState),
           ],
         ),
       ),
     );
   }
-}
 
-class _PeriodButton extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
+  Widget _buildAnimatedItem({
+    required double intervalStart,
+    required double intervalEnd,
+    required Widget child,
+  }) {
+    final animation = CurvedAnimation(
+      parent: _animController,
+      curve: Interval(intervalStart, intervalEnd, curve: Curves.easeOutCubic),
+    );
 
-  const _PeriodButton({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-  });
+    return AnimatedBuilder(
+      animation: animation,
+      builder: (context, child) {
+        return Opacity(
+          opacity: animation.value,
+          child: Transform.translate(
+            offset: Offset(0, 20 * (1.0 - animation.value)),
+            child: child,
+          ),
+        );
+      },
+      child: child,
+    );
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: 6,
-        ),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primaryDark : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppRadius.pill),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-            color: isSelected ? Colors.white : AppColors.textSecondary,
+  Widget _buildExecutiveHeader(String userName, String? role) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.success.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(AppRadius.full),
+                      border: Border.all(
+                        color: AppColors.success.withOpacity(0.4),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            color: AppColors.success,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.success.withOpacity(0.8),
+                                blurRadius: 4,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                        const Text(
+                          "ONLINE & SYNCED",
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.4,
+                            color: AppColors.success,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  Text(
+                    DateFormat('EEE, d MMM').format(DateTime.now()),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                "${_getGreeting()}, $userName 👋",
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.textPrimary,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 2),
+              const Text(
+                "Field Sales Overview",
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildPeriodSelector() {
+    final periods = ["TODAY", "WEEK", "MONTH"];
+
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceElevated.withOpacity(0.8),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: periods.map((period) {
+          final isSelected = _selectedPeriod == period;
+          return Expanded(
+            child: SpringButton(
+              onTap: () => setState(() => _selectedPeriod = period),
+              scaleDown: 0.94,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOutCubic,
+                padding: const EdgeInsets.symmetric(vertical: 7),
+                decoration: BoxDecoration(
+                  gradient: isSelected ? AppColors.primaryGradient : null,
+                  color: isSelected ? null : Colors.transparent,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: AppColors.primary.withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Center(
+                  child: Text(
+                    period == "TODAY"
+                        ? "Today"
+                        : (period == "WEEK" ? "This Week" : "This Month"),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: isSelected
+                          ? FontWeight.w800
+                          : FontWeight.w500,
+                      color: isSelected
+                          ? Colors.white
+                          : AppColors.textSecondary,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
       ),
     );
   }
-}
 
-class _SnapshotRow extends StatelessWidget {
-  final String label;
-  final String value;
-  final bool isHighlight;
-  final bool isMuted;
+  Widget _buildHeroCommercialCockpit(
+    PurchaseState purchaseState,
+    List<dynamic> todayVisits,
+  ) {
+    final totalSales = purchaseState.totalPurchaseAmount;
+    final totalRevenue = purchaseState.totalRevenue;
+    final formatter = NumberFormat.currency(locale: 'en_IN', symbol: '₹');
 
-  const _SnapshotRow({
-    required this.label,
-    required this.value,
-    this.isHighlight = false,
-    this.isMuted = false,
-  });
+    return AppCard(
+      isGlass: true,
+      gradient: AppColors.heroCardGradient,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        border: Border.all(
+                          color: AppColors.primaryGlow.withOpacity(0.4),
+                          width: 1,
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.insights_rounded,
+                        size: 18,
+                        color: AppColors.primaryGlow,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    const Flexible(
+                      child: Text(
+                        "COMMERCIAL TELEMETRY",
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11,
+                          letterSpacing: 0.8,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryLight,
+                  borderRadius: BorderRadius.circular(AppRadius.full),
+                  border: Border.all(
+                    color: AppColors.primaryGlow.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+                child: const Text(
+                  "PTS Telemetry",
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primaryGlow,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.lg),
 
-  @override
-  Widget build(BuildContext context) {
+          // Total Realized Commercial Value
+          Text(
+            formatter.format(totalSales),
+            style: const TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.w900,
+              color: AppColors.textPrimary,
+              letterSpacing: -1.0,
+            ),
+          ),
+          const Text(
+            "Overall Purchases Booked",
+            style: TextStyle(
+              fontSize: 12,
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+
+          // Metric Sub-Grid
+          Row(
+            children: [
+              Expanded(
+                child: _buildMiniMetric(
+                  label: "Gross Revenue",
+                  value: formatter.format(totalRevenue),
+                  color: AppColors.success,
+                  icon: Icons.monetization_on_outlined,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: _buildMiniMetric(
+                  label: "PTS Est. Yield",
+                  value: "—",
+                  color: AppColors.primaryGlow,
+                  icon: Icons.percent_rounded,
+                  badge: "Pending",
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMiniMetric({
+    required String label,
+    required String value,
+    required Color color,
+    required IconData icon,
+    String? badge,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm + 2,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.surface.withOpacity(0.6),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: color.withOpacity(0.25), width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+              if (badge != null) ...[
+                const SizedBox(width: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 5,
+                    vertical: 1,
+                  ),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    badge,
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w800,
+                      color: color,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBentoQuickActions() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SectionHeader(
+          title: "Quick Action Dock",
+          subtitle: "Tactile one-touch field actions",
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        AppCard(
+          isGlass: true,
+          padding: const EdgeInsets.symmetric(
+            vertical: AppSpacing.md,
+            horizontal: AppSpacing.sm,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              Expanded(
+                child: QuickActionItem(
+                  label: "Add Visit",
+                  icon: Icons.add_location_alt_rounded,
+                  color: AppColors.primaryGlow,
+                  backgroundColor: AppColors.primaryLight,
+                  onTap: () => context.go('/visits/add'),
+                ),
+              ),
+              Expanded(
+                child: QuickActionItem(
+                  label: "Add Doctor",
+                  icon: Icons.person_add_alt_1_rounded,
+                  color: AppColors.secondary,
+                  backgroundColor: AppColors.secondaryLight,
+                  onTap: () => context.go('/doctors/add'),
+                ),
+              ),
+              Expanded(
+                child: QuickActionItem(
+                  label: "Purchase",
+                  icon: Icons.receipt_long_rounded,
+                  color: AppColors.success,
+                  backgroundColor: AppColors.successLight,
+                  onTap: () => context.go('/sales/record'),
+                ),
+              ),
+              Expanded(
+                child: QuickActionItem(
+                  label: "Expense",
+                  icon: Icons.account_balance_wallet_rounded,
+                  color: AppColors.warning,
+                  backgroundColor: AppColors.warningLight,
+                  onTap: () => context.go('/expenses/add'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMissionRadar(List<dynamic> todayVisits) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SectionHeader(
+          title: "Today's Mission Radar",
+          subtitle: "${todayVisits.length} appointments on daily roster",
+          actionLabel: "View all",
+          onAction: () => context.go('/visits'),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        if (todayVisits.isEmpty)
+          AppCard(
+            isGlass: true,
+            padding: const EdgeInsets.all(AppSpacing.xl),
+            child: Center(
+              child: Column(
+                children: [
+                  Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryLight,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.primaryGlow.withOpacity(0.3),
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.event_available_rounded,
+                      size: 26,
+                      color: AppColors.primaryGlow,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  const Text(
+                    "Clear Runway Today",
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    "No scheduled visits for today yet.",
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  SpringButton(
+                    onTap: () => context.go('/visits/add'),
+                    scaleDown: 0.94,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        gradient: AppColors.primaryGradient,
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                      child: const Text(
+                        "Schedule Next Visit",
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: todayVisits.length > 3 ? 3 : todayVisits.length,
+            separatorBuilder: (context, index) =>
+                const SizedBox(height: AppSpacing.sm),
+            itemBuilder: (context, index) {
+              final v = todayVisits[index];
+              return AppCard(
+                isGlass: true,
+                padding: const EdgeInsets.all(AppSpacing.md),
+                onTap: () => context.go('/visits'),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryLight,
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        border: Border.all(
+                          color: AppColors.primaryGlow.withOpacity(0.3),
+                        ),
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.medical_services_rounded,
+                          size: 20,
+                          color: AppColors.primaryGlow,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            v.doctorName ?? "Doctor Visit",
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            v.clinicName ?? "Clinic Consultation",
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    StatusChip.fromStatus(v.status),
+                  ],
+                ),
+              );
+            },
+          ),
+      ],
+    );
+  }
+
+  Widget _buildTerritoryMatrix(DoctorState doctorState) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SectionHeader(
+          title: "Territory Matrix",
+          subtitle: "Network coverage & active doctor reach",
+          actionLabel: "Directory",
+          onAction: () => context.go('/doctors'),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Row(
+          children: [
+            Expanded(
+              child: MetricCard(
+                title: "Enrolled Doctors",
+                value: "${doctorState.total}",
+                icon: Icons.people_alt_rounded,
+                accentColor: AppColors.primaryGlow,
+                subtitle: "${doctorState.doctors.length} locally cached",
+                onTap: () => context.go('/doctors'),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: MetricCard(
+                title: "Territory Reach",
+                value: "${doctorState.areas.length} Areas",
+                icon: Icons.map_rounded,
+                accentColor: AppColors.secondary,
+                subtitle: "Assigned territory",
+                onTap: () => context.go('/doctors'),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCommercialSnapshot(PurchaseState purchaseState) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SectionHeader(
+          title: "Executive Commercial Health",
+          subtitle: "Gross financial indicators & profit telemetry",
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        AppCard(
+          isGlass: true,
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Column(
+            children: [
+              _buildSnapshotRow(
+                label: "Gross Purchase Value",
+                value: NumberFormat.currency(
+                  locale: 'en_IN',
+                  symbol: '₹',
+                ).format(purchaseState.totalPurchaseAmount),
+                isHighlight: true,
+              ),
+              const Divider(height: AppSpacing.lg, color: AppColors.border),
+              _buildSnapshotRow(
+                label: "Realized Revenue (Net + Tax)",
+                value: NumberFormat.currency(
+                  locale: 'en_IN',
+                  symbol: '₹',
+                ).format(purchaseState.totalRevenue),
+              ),
+              const Divider(height: AppSpacing.lg, color: AppColors.border),
+              _buildSnapshotRow(
+                label: "PTS Formula Rate",
+                value: "Calculating / Not configured",
+                isMuted: true,
+              ),
+              const Divider(height: AppSpacing.lg, color: AppColors.border),
+              _buildSnapshotRow(
+                label: "Net Profit / Loss",
+                value: "Profit/Loss unavailable",
+                isMuted: true,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSnapshotRow({
+    required String label,
+    required String value,
+    bool isHighlight = false,
+    bool isMuted = false,
+  }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -563,7 +836,7 @@ class _SnapshotRow extends StatelessWidget {
             fontSize: 14,
             fontWeight: isHighlight ? FontWeight.w800 : FontWeight.w600,
             color: isHighlight
-                ? AppColors.primaryDark
+                ? AppColors.primaryGlow
                 : (isMuted ? AppColors.textMuted : AppColors.textPrimary),
             fontStyle: isMuted ? FontStyle.italic : FontStyle.normal,
           ),

@@ -62,12 +62,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           width: 64,
                           height: 64,
                           decoration: BoxDecoration(
-                            color: AppColors.primary,
+                            gradient: AppColors.primaryGradient,
                             borderRadius: BorderRadius.circular(AppRadius.lg),
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.primary.withValues(alpha: 0.2),
-                                blurRadius: 12,
+                                color: AppColors.primary.withOpacity(0.4),
+                                blurRadius: 16,
                                 offset: const Offset(0, 4),
                               ),
                             ],
@@ -90,7 +90,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w800,
-                            color: AppColors.secondaryDark,
+                            color: AppColors.primaryGlow,
                             letterSpacing: 2.0,
                           ),
                         ),
@@ -110,6 +110,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                   // Login Form Card
                   AppCard(
+                    isGlass: true,
                     padding: const EdgeInsets.all(AppSpacing.xxl),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,

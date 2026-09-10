@@ -134,7 +134,11 @@ class _RecordPurchaseScreenState extends ConsumerState<RecordPurchaseScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text("Record Purchase"), centerTitle: false),
+      appBar: AppBar(
+        title: const Text("Record Purchase"),
+        backgroundColor: AppColors.background,
+        centerTitle: false,
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSpacing.lg),
@@ -150,7 +154,9 @@ class _RecordPurchaseScreenState extends ConsumerState<RecordPurchaseScreen> {
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 AppCard(
+                  isGlass: true,
                   child: DropdownButtonFormField<String>(
+                    dropdownColor: AppColors.surfaceElevated,
                     initialValue: _selectedDoctorId,
                     decoration: const InputDecoration(
                       labelText: "Doctor / Clinic",
