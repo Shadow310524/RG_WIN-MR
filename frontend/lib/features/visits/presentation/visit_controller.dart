@@ -88,32 +88,35 @@ class VisitController extends Notifier<VisitState> {
         options: options,
       );
       final data = response.data;
-      if (data is List) {
-        final serverVisits = data.map((json) {
-          return VisitModel(
-            id: json['id'] as String,
-            doctorId: json['doctor_id'] as String,
-            doctorName: json['doctor_name'] as String?,
-            clinicName: json['clinic_name'] as String?,
-            specialization: json['specialization'] as String?,
-            visitDatetime:
-                DateTime.tryParse(json['visit_datetime'] as String? ?? '') ??
-                DateTime.now(),
-            visitType: json['visit_type'] as String? ?? 'ROUTINE',
-            doctorResponse: json['doctor_response'] as String? ?? 'POSITIVE',
-            prescriptionPotential:
-                json['prescription_potential'] as String? ?? 'MEDIUM',
-            discussedProducts: json['discussed_products'] as String?,
-            samplesGiven: json['samples_given'] as String?,
-            notes: json['notes'] as String?,
-            status: json['status'] as String? ?? 'COMPLETED',
-            syncStatus: 'SYNCED',
-          );
-        }).toList();
+      final List rawItems = data is List
+          ? data
+          : (data is Map && data['items'] is List ? data['items'] as List : []);
 
-        state = state.copyWith(visits: serverVisits, isLoading: false);
-        return;
-      }
+      final serverVisits = rawItems.map((json) {
+        return VisitModel(
+          id: json['id'] as String,
+          doctorId: json['doctor_id'] as String,
+          doctorName: json['doctor_name'] as String?,
+          clinicName: json['clinic_name'] as String?,
+          specialization: json['specialization'] as String?,
+          visitDatetime:
+              DateTime.tryParse(json['visit_datetime'] as String? ?? '') ??
+              DateTime.now(),
+          visitType: json['visit_type'] as String? ?? 'REGULAR_VISIT',
+          doctorResponse: json['doctor_response'] as String? ?? 'POSITIVE',
+          prescriptionPotential:
+              json['prescription_potential'] as String? ?? 'MEDIUM',
+          discussedProducts: json['doctor_feedback'] as String? ??
+              json['discussed_products'] as String?,
+          samplesGiven: json['samples_given'] as String?,
+          notes: json['notes'] as String?,
+          status: json['status'] as String? ?? 'COMPLETED',
+          syncStatus: 'SYNCED',
+        );
+      }).toList();
+
+      state = state.copyWith(visits: serverVisits, isLoading: false);
+      return;
     } catch (_) {
       // Offline fallback: use local state
     }

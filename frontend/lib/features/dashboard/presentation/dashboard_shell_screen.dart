@@ -52,6 +52,12 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen>
           ),
         );
     _entranceController.forward();
+    Future.microtask(() {
+      ref.read(visitControllerProvider.notifier).loadVisits();
+      ref.read(purchaseControllerProvider.notifier).loadPurchases();
+      ref.read(doctorControllerProvider.notifier).loadInitialData();
+      ref.read(followUpControllerProvider.notifier).loadFollowUps();
+    });
   }
 
   @override

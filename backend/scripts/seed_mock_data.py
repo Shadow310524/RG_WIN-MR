@@ -268,7 +268,7 @@ async def seed_mock_data():
         visit_specs = [
             (
                 "MCI/2012/33401",  # Dr. Anitha Ramesh
-                now - timedelta(hours=3),
+                now - timedelta(hours=2),
                 VisitTypeEnum.REGULAR_VISIT,
                 DoctorResponseEnum.PRESCRIBING,
                 PrescriptionPotentialEnum.HIGH,
@@ -276,11 +276,19 @@ async def seed_mock_data():
             ),
             (
                 "MCI/2008/18204",  # Dr. Sundaram K
-                now - timedelta(days=1, hours=2),
+                now - timedelta(hours=4),
                 VisitTypeEnum.PRODUCT_DISCUSSION,
                 DoctorResponseEnum.POSITIVE,
                 PrescriptionPotentialEnum.HIGH,
                 "Discussed glycemic management protocols with Healix-Metformin dual release.",
+            ),
+            (
+                "MCI/2011/90123",  # Dr. Karthik Raja
+                now - timedelta(hours=6),
+                VisitTypeEnum.REGULAR_VISIT,
+                DoctorResponseEnum.PRESCRIBING,
+                PrescriptionPotentialEnum.HIGH,
+                "Presented latest ACC guideline data supporting Healix-Cardio therapy.",
             ),
             (
                 "MCI/2015/78211",  # Dr. Rajesh Khanna
@@ -291,16 +299,8 @@ async def seed_mock_data():
                 "Reviewed surgical patient rehabilitation supplement packages. Reordering discussed.",
             ),
             (
-                "MCI/2011/90123",  # Dr. Karthik Raja
-                now - timedelta(days=3, hours=1),
-                VisitTypeEnum.REGULAR_VISIT,
-                DoctorResponseEnum.PRESCRIBING,
-                PrescriptionPotentialEnum.HIGH,
-                "Presented latest ACC guideline data supporting Healix-Cardio therapy.",
-            ),
-            (
                 "MCI/2016/55490",  # Dr. Meenakshi S
-                now - timedelta(days=4, hours=5),
+                now - timedelta(days=3, hours=5),
                 VisitTypeEnum.REGULAR_VISIT,
                 DoctorResponseEnum.INTERESTED,
                 PrescriptionPotentialEnum.MEDIUM,
@@ -308,7 +308,7 @@ async def seed_mock_data():
             ),
             (
                 "MCI/2005/11299",  # Dr. Venkatesh Prasad
-                now - timedelta(days=5, hours=2),
+                now - timedelta(days=4, hours=2),
                 VisitTypeEnum.PRODUCT_DISCUSSION,
                 DoctorResponseEnum.POSITIVE,
                 PrescriptionPotentialEnum.HIGH,
@@ -316,7 +316,7 @@ async def seed_mock_data():
             ),
             (
                 "MCI/2018/66782",  # Dr. Priya Venkatesh
-                now - timedelta(days=6, hours=3),
+                now - timedelta(days=5, hours=3),
                 VisitTypeEnum.REGULAR_VISIT,
                 DoctorResponseEnum.POSITIVE,
                 PrescriptionPotentialEnum.MEDIUM,
@@ -324,7 +324,7 @@ async def seed_mock_data():
             ),
             (
                 "MCI/2019/44301",  # Dr. Deepa Subramaniam
-                now - timedelta(days=7, hours=2),
+                now - timedelta(days=6, hours=2),
                 VisitTypeEnum.NEW_DOCTOR,
                 DoctorResponseEnum.INTERESTED,
                 PrescriptionPotentialEnum.MEDIUM,
@@ -356,7 +356,7 @@ async def seed_mock_data():
                 "MCI/2012/33401",  # Dr. Anitha Ramesh
                 Decimal("2500.00"),
                 PromotionalInvestmentTypeEnum.SAMPLE,
-                today - timedelta(days=2),
+                today,
                 "Cardiology trial starter packs (10 patient boxes)",
                 visits[0].id,
             ),
@@ -364,9 +364,17 @@ async def seed_mock_data():
                 "MCI/2008/18204",  # Dr. Sundaram K
                 Decimal("1800.00"),
                 PromotionalInvestmentTypeEnum.FREE_SUPPLY,
-                today - timedelta(days=1),
+                today,
                 "Glucometer diagnostic strip bundles for patient education",
                 visits[1].id,
+            ),
+            (
+                "MCI/2011/90123",  # Dr. Karthik Raja
+                Decimal("1500.00"),
+                PromotionalInvestmentTypeEnum.PROMOTIONAL_MATERIAL,
+                today,
+                "Patient dietary guidance desk standees & educational charts",
+                visits[2].id,
             ),
             (
                 "MCI/2015/78211",  # Dr. Rajesh Khanna
@@ -374,21 +382,13 @@ async def seed_mock_data():
                 PromotionalInvestmentTypeEnum.PROMOTIONAL_UNIT,
                 today - timedelta(days=2),
                 "Joint mobility therapy clinical demo sets",
-                visits[2].id,
-            ),
-            (
-                "MCI/2011/90123",  # Dr. Karthik Raja
-                Decimal("1500.00"),
-                PromotionalInvestmentTypeEnum.PROMOTIONAL_MATERIAL,
-                today - timedelta(days=3),
-                "Patient dietary guidance desk standees & educational charts",
                 visits[3].id,
             ),
             (
                 "MCI/2016/55490",  # Dr. Meenakshi S
                 Decimal("1200.00"),
                 PromotionalInvestmentTypeEnum.SAMPLE,
-                today - timedelta(days=4),
+                today - timedelta(days=3),
                 "Multivitamin promotional trial kit",
                 visits[4].id,
             ),
@@ -396,7 +396,7 @@ async def seed_mock_data():
                 "MCI/2005/11299",  # Dr. Venkatesh Prasad
                 Decimal("2100.00"),
                 PromotionalInvestmentTypeEnum.FREE_SUPPLY,
-                today - timedelta(days=5),
+                today - timedelta(days=4),
                 "Hypertension tracking charts and digital log supplies",
                 visits[5].id,
             ),
@@ -404,7 +404,7 @@ async def seed_mock_data():
                 "MCI/2018/66782",  # Dr. Priya Venkatesh
                 Decimal("950.00"),
                 PromotionalInvestmentTypeEnum.SAMPLE,
-                today - timedelta(days=6),
+                today - timedelta(days=5),
                 "Pediatric cough syrup starter samples",
                 visits[6].id,
             ),
@@ -412,7 +412,7 @@ async def seed_mock_data():
                 "MCI/2019/44301",  # Dr. Deepa Subramaniam
                 Decimal("1100.00"),
                 PromotionalInvestmentTypeEnum.PROMOTIONAL_MATERIAL,
-                today - timedelta(days=7),
+                today - timedelta(days=6),
                 "Endocrine clinical reference guides and trial kits",
                 visits[7].id,
             ),
@@ -441,7 +441,7 @@ async def seed_mock_data():
                 Decimal("45000.00"),
                 Decimal("8100.00"),
                 Decimal("53100.00"),
-                today - timedelta(days=1),
+                today,
                 "Apollo Pharmacy hospital order #APO-2026-901",
             ),
             (
@@ -449,7 +449,7 @@ async def seed_mock_data():
                 Decimal("32000.00"),
                 Decimal("5760.00"),
                 Decimal("37760.00"),
-                today - timedelta(days=2),
+                today,
                 "Sundaram Clinic bulk monthly restock #SC-1029",
             ),
             (
@@ -457,7 +457,7 @@ async def seed_mock_data():
                 Decimal("38000.00"),
                 Decimal("6840.00"),
                 Decimal("44840.00"),
-                today - timedelta(days=3),
+                today,
                 "Raja Cardio Centre prescription fulfillment #RCC-88",
             ),
             (
@@ -465,31 +465,31 @@ async def seed_mock_data():
                 Decimal("28000.00"),
                 Decimal("5040.00"),
                 Decimal("33040.00"),
-                today - timedelta(days=3),
+                today - timedelta(days=2),
                 "Orthopedic post-op supplement stock #KBJ-44",
-            ),
-            (
-                "MCI/2005/11299",  # Dr. Venkatesh Prasad
-                Decimal("22000.00"),
-                Decimal("3960.00"),
-                Decimal("25960.00"),
-                today - timedelta(days=5),
-                "Adyar Community Clinic monthly batch #ACC-31",
             ),
             (
                 "MCI/2016/55490",  # Dr. Meenakshi S
                 Decimal("15000.00"),
                 Decimal("2700.00"),
                 Decimal("17700.00"),
-                today - timedelta(days=4),
+                today - timedelta(days=3),
                 "Meenakshi Clinic introductory purchase #MFH-12",
+            ),
+            (
+                "MCI/2005/11299",  # Dr. Venkatesh Prasad
+                Decimal("22000.00"),
+                Decimal("3960.00"),
+                Decimal("25960.00"),
+                today - timedelta(days=4),
+                "Adyar Community Clinic monthly batch #ACC-31",
             ),
             (
                 "MCI/2018/66782",  # Dr. Priya Venkatesh
                 Decimal("12000.00"),
                 Decimal("2160.00"),
                 Decimal("14160.00"),
-                today - timedelta(days=6),
+                today - timedelta(days=5),
                 "Little Stars pharmacy order #LSC-09",
             ),
             (
