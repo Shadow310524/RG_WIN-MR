@@ -352,7 +352,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Application shell is visible
-        expect(find.text("Dashboard"), findsWidgets);
+        expect(find.text("Home"), findsWidgets);
         expect(find.text("Doctors"), findsWidgets);
         expect(find.text("ADMIN"), findsOneWidget);
 

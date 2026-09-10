@@ -3,16 +3,22 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:rgwin_crm/core/routing/responsive_scaffold.dart';
 import 'package:rgwin_crm/core/routing/route_paths.dart';
+import 'package:rgwin_crm/features/analytics/presentation/analytics_screen.dart';
 import 'package:rgwin_crm/features/auth/presentation/auth_controller.dart';
 import 'package:rgwin_crm/features/auth/presentation/auth_state.dart';
 import 'package:rgwin_crm/features/auth/presentation/login_screen.dart';
 import 'package:rgwin_crm/features/dashboard/presentation/dashboard_shell_screen.dart';
-import 'package:rgwin_crm/features/doctors/presentation/doctors_shell_screen.dart';
 import 'package:rgwin_crm/features/doctors/presentation/add_edit_doctor_screen.dart';
 import 'package:rgwin_crm/features/doctors/presentation/doctor_detail_screen.dart';
-import 'package:rgwin_crm/features/visits/presentation/visits_shell_screen.dart';
-import 'package:rgwin_crm/features/products/presentation/products_shell_screen.dart';
+import 'package:rgwin_crm/features/doctors/presentation/doctors_shell_screen.dart';
+import 'package:rgwin_crm/features/expenses/presentation/record_expense_screen.dart';
 import 'package:rgwin_crm/features/followups/presentation/followups_shell_screen.dart';
+import 'package:rgwin_crm/features/more/presentation/more_shell_screen.dart';
+import 'package:rgwin_crm/features/products/presentation/products_shell_screen.dart';
+import 'package:rgwin_crm/features/sales/presentation/record_purchase_screen.dart';
+import 'package:rgwin_crm/features/sales/presentation/sales_shell_screen.dart';
+import 'package:rgwin_crm/features/visits/presentation/record_visit_screen.dart';
+import 'package:rgwin_crm/features/visits/presentation/visits_shell_screen.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
   debugLabel: 'root',
@@ -20,34 +26,34 @@ final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
 
 final List<NavigationItem> kAppNavigationItems = [
   const NavigationItem(
-    label: "Dashboard",
-    icon: Icons.dashboard_outlined,
-    selectedIcon: Icons.dashboard,
+    label: "Home",
+    icon: Icons.home_outlined,
+    selectedIcon: Icons.home_rounded,
     path: RoutePaths.dashboard,
   ),
   const NavigationItem(
     label: "Doctors",
-    icon: Icons.people_outline,
-    selectedIcon: Icons.people,
+    icon: Icons.people_outline_rounded,
+    selectedIcon: Icons.people_rounded,
     path: RoutePaths.doctors,
   ),
   const NavigationItem(
     label: "Visits",
-    icon: Icons.location_on_outlined,
-    selectedIcon: Icons.location_on,
+    icon: Icons.assignment_outlined,
+    selectedIcon: Icons.assignment_rounded,
     path: RoutePaths.visits,
   ),
   const NavigationItem(
-    label: "Products",
-    icon: Icons.medication_outlined,
-    selectedIcon: Icons.medication,
-    path: RoutePaths.products,
+    label: "Sales",
+    icon: Icons.account_balance_wallet_outlined,
+    selectedIcon: Icons.account_balance_wallet_rounded,
+    path: RoutePaths.sales,
   ),
   const NavigationItem(
-    label: "Follow-ups",
-    icon: Icons.calendar_today_outlined,
-    selectedIcon: Icons.calendar_today,
-    path: RoutePaths.followups,
+    label: "More",
+    icon: Icons.grid_view_outlined,
+    selectedIcon: Icons.grid_view_rounded,
+    path: RoutePaths.more,
   ),
 ];
 
@@ -105,6 +111,37 @@ GoRouter createAppRouter({
         path: RoutePaths.login,
         builder: (context, state) => const LoginScreen(),
       ),
+      // Standalone modal / action routes
+      GoRoute(
+        path: RoutePaths.recordVisit,
+        builder: (context, state) {
+          final docId = state.uri.queryParameters['doctor_id'];
+          return RecordVisitScreen(preselectedDoctorId: docId);
+        },
+      ),
+      GoRoute(
+        path: RoutePaths.recordPurchase,
+        builder: (context, state) {
+          final docId = state.uri.queryParameters['doctor_id'];
+          return RecordPurchaseScreen(preselectedDoctorId: docId);
+        },
+      ),
+      GoRoute(
+        path: RoutePaths.recordExpense,
+        builder: (context, state) => const RecordExpenseScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.analytics,
+        builder: (context, state) => const AnalyticsScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.products,
+        builder: (context, state) => const ProductsShellScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.followups,
+        builder: (context, state) => const FollowupsShellScreen(),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return ResponsiveScaffold(
@@ -120,6 +157,7 @@ GoRouter createAppRouter({
           );
         },
         branches: [
+          // Branch 0: Dashboard (Home)
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -128,6 +166,7 @@ GoRouter createAppRouter({
               ),
             ],
           ),
+          // Branch 1: Doctors Directory
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -158,6 +197,7 @@ GoRouter createAppRouter({
               ),
             ],
           ),
+          // Branch 2: Visits
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -166,19 +206,21 @@ GoRouter createAppRouter({
               ),
             ],
           ),
+          // Branch 3: Sales
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: RoutePaths.products,
-                builder: (context, state) => const ProductsShellScreen(),
+                path: RoutePaths.sales,
+                builder: (context, state) => const SalesShellScreen(),
               ),
             ],
           ),
+          // Branch 4: More
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: RoutePaths.followups,
-                builder: (context, state) => const FollowupsShellScreen(),
+                path: RoutePaths.more,
+                builder: (context, state) => const MoreShellScreen(),
               ),
             ],
           ),

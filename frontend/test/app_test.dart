@@ -80,15 +80,14 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify application header and branding
-    expect(find.text('Healix Field Operations'), findsOneWidget);
-    expect(find.text('Phase 1 Foundation'), findsOneWidget);
+    expect(find.text('Field Sales Overview'), findsOneWidget);
 
-    // Verify navigation destinations
-    expect(find.text('Dashboard'), findsWidgets);
+    // Verify navigation destinations (Home, Doctors, Visits, Sales, More)
+    expect(find.text('Home'), findsWidgets);
     expect(find.text('Doctors'), findsWidgets);
     expect(find.text('Visits'), findsWidgets);
-    expect(find.text('Products'), findsWidgets);
-    expect(find.text('Follow-ups'), findsWidgets);
+    expect(find.text('Sales'), findsWidgets);
+    expect(find.text('More'), findsWidgets);
 
     // Verify user role badge
     expect(find.text('ADMIN'), findsOneWidget);

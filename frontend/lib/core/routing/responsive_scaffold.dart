@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rgwin_crm/core/theme/app_colors.dart';
 import 'package:rgwin_crm/core/theme/app_spacing.dart';
-
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rgwin_crm/core/widgets/app_badge.dart';
 import 'package:rgwin_crm/features/auth/presentation/auth_controller.dart';
 
@@ -40,8 +39,7 @@ class ResponsiveScaffold extends ConsumerWidget {
     this.floatingActionButton,
   });
 
-  static const double kTabletBreakpoint = 768.0;
-  static const double kDesktopBreakpoint = 1024.0;
+  static const double kMaxMobileWidth = 480.0;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -63,7 +61,7 @@ class ResponsiveScaffold extends ConsumerWidget {
           tooltip: 'Sign Out (${authState.user!.fullName})',
           onPressed: () => ref.read(authProvider.notifier).logout(),
         ),
-        const SizedBox(width: AppSpacing.sm),
+        const SizedBox(width: AppSpacing.xs),
       ],
     ];
 
@@ -71,90 +69,48 @@ class ResponsiveScaffold extends ConsumerWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final bool isDesktop = constraints.maxWidth >= kTabletBreakpoint;
+        final isWideScreen = constraints.maxWidth > kMaxMobileWidth;
 
-        if (isDesktop) {
-          // Tablet & Desktop: NavigationRail sidebar + content
-          return Scaffold(
-            appBar: AppBar(
-              title: Text(title ?? items[currentIndex].label),
-              actions: effectiveActions,
-              leading: null,
-              automaticallyImplyLeading: false,
-            ),
-            floatingActionButton: floatingActionButton,
-            body: Row(
+        final scaffoldContent = Scaffold(
+          backgroundColor: AppColors.background,
+          appBar: AppBar(
+            backgroundColor: AppColors.surface,
+            elevation: 0,
+            title: Row(
               children: [
-                NavigationRail(
-                  selectedIndex: currentIndex,
-                  onDestinationSelected: onNavigationIndexChanged,
-                  labelType: NavigationRailLabelType.all,
-                  leading: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: AppSpacing.lg,
-                    ),
-                    child: Column(
-                      children: [
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                          ),
-                          child: const Center(
-                            child: Text(
-                              "RG",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w900,
-                                fontSize: 16,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.xs),
-                        const Text(
-                          "HEALIX",
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.secondaryDark,
-                            letterSpacing: 1.0,
-                          ),
-                        ),
-                      ],
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      "RG",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 13,
+                        letterSpacing: 0.5,
+                      ),
                     ),
                   ),
-                  destinations: items.map((item) {
-                    return NavigationRailDestination(
-                      icon: Icon(item.icon),
-                      selectedIcon: Icon(item.selectedIcon),
-                      label: Text(item.label),
-                    );
-                  }).toList(),
                 ),
-                const VerticalDivider(
-                  width: 1,
-                  thickness: 1,
-                  color: AppColors.border,
-                ),
-                Expanded(
-                  child: Container(color: AppColors.background, child: body),
+                const SizedBox(width: AppSpacing.sm),
+                Text(
+                  title ?? items[currentIndex].label,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ],
             ),
-          );
-        }
-
-        // Mobile: Standard AppBar + Body + BottomNavigationBar
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(title ?? items[currentIndex].label),
             actions: effectiveActions,
           ),
-          body: Container(color: AppColors.background, child: body),
+          body: body,
           floatingActionButton: floatingActionButton,
           bottomNavigationBar: NavigationBar(
             selectedIndex: currentIndex,
@@ -168,6 +124,34 @@ class ResponsiveScaffold extends ConsumerWidget {
             }).toList(),
           ),
         );
+
+        if (isWideScreen) {
+          // On desktop/Chrome, center the mobile viewport in a clean mobile frame
+          return Scaffold(
+            backgroundColor: const Color(
+              0xFFF0EDF9,
+            ), // Subtle lavender tinted backdrop
+            body: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: kMaxMobileWidth),
+                child: Container(
+                  decoration: BoxDecoration(
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 24,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ClipRect(child: scaffoldContent),
+                ),
+              ),
+            ),
+          );
+        }
+
+        return scaffoldContent;
       },
     );
   }
