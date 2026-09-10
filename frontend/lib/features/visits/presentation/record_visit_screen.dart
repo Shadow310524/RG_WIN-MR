@@ -9,6 +9,7 @@ import 'package:rgwin_crm/core/widgets/app_card.dart';
 import 'package:rgwin_crm/core/widgets/app_text_field.dart';
 import 'package:rgwin_crm/core/widgets/section_header.dart';
 import 'package:rgwin_crm/features/doctors/presentation/doctor_controller.dart';
+import 'package:rgwin_crm/features/followups/presentation/follow_up_controller.dart';
 import 'package:rgwin_crm/features/visits/presentation/visit_controller.dart';
 
 class RecordVisitScreen extends ConsumerStatefulWidget {
@@ -37,6 +38,7 @@ class _RecordVisitScreenState extends ConsumerState<RecordVisitScreen> {
   final TextEditingController _discussedController = TextEditingController();
   final TextEditingController _samplesController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
+  final TextEditingController _followUpTaskController = TextEditingController();
 
   final List<Map<String, String>> _responseOptions = [
     {
@@ -72,6 +74,7 @@ class _RecordVisitScreenState extends ConsumerState<RecordVisitScreen> {
     _discussedController.dispose();
     _samplesController.dispose();
     _notesController.dispose();
+    _followUpTaskController.dispose();
     super.dispose();
   }
 
@@ -148,10 +151,25 @@ class _RecordVisitScreenState extends ConsumerState<RecordVisitScreen> {
               : _notesController.text.trim(),
         );
 
+    if (_followUpRequired && _followUpDate != null) {
+      final taskReason = _followUpTaskController.text.trim().isNotEmpty
+          ? _followUpTaskController.text.trim()
+          : "Follow up on prescription and product discussions";
+      await ref
+          .read(followUpControllerProvider.notifier)
+          .createFollowUp(
+            doctorId: _selectedDoctorId!,
+            doctorName: _selectedDoctorName,
+            clinicName: _selectedClinicName,
+            dueDate: _followUpDate!,
+            taskReason: taskReason,
+          );
+    }
+
     if (mounted && success) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Field visit recorded successfully."),
+          content: Text("Visit recorded"),
           backgroundColor: AppColors.success,
         ),
       );
@@ -396,6 +414,44 @@ class _RecordVisitScreenState extends ConsumerState<RecordVisitScreen> {
                         onChanged: (val) =>
                             setState(() => _purchaseOpportunity = val),
                       ),
+                      if (_purchaseOpportunity) ...[
+                        const SizedBox(height: AppSpacing.xs),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(AppSpacing.sm),
+                          decoration: BoxDecoration(
+                            color: AppColors.successLight.withOpacity(0.5),
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                            border: Border.all(
+                              color: AppColors.success.withOpacity(0.3),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                "Commercial purchase opportunity expressed.",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.sm),
+                              AppButton(
+                                label: "Record Purchase",
+                                icon: Icons.receipt_long_outlined,
+                                variant: AppButtonVariant.outlined,
+                                onPressed: () {
+                                  context.push(
+                                    '/sales/record${_selectedDoctorId != null ? '?doctor_id=$_selectedDoctorId' : ''}',
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                      ],
                       const Divider(),
                       SwitchListTile(
                         contentPadding: EdgeInsets.zero,
@@ -464,6 +520,13 @@ class _RecordVisitScreenState extends ConsumerState<RecordVisitScreen> {
                             size: 16,
                           ),
                           onTap: _pickFollowUpDate,
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        AppTextField(
+                          controller: _followUpTaskController,
+                          label: "Follow-up Task",
+                          hint: "e.g. Call regarding purchase requirement",
+                          prefixIcon: Icons.task_alt_outlined,
                         ),
                       ],
                     ],

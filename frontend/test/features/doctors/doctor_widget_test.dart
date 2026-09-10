@@ -357,40 +357,37 @@ void main() {
   });
 
   group('Doctor Detail Screen Tests', () {
-    testWidgets('Renders credentials, quick actions and Phase 4 placeholder', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        createTestWidget(DoctorDetailScreen(doctorId: sampleDoctor.id)),
-      );
-      await tester.pumpAndSettle();
+    testWidgets(
+      'Renders credentials, quick actions, follow-ups, and relationship timeline',
+      (tester) async {
+        await tester.pumpWidget(
+          createTestWidget(DoctorDetailScreen(doctorId: sampleDoctor.id)),
+        );
+        await tester.pumpAndSettle();
 
-      expect(find.text('Dr. Anitha Ramesh'), findsOneWidget);
-      expect(find.text('Cardiology'), findsWidgets);
-      expect(find.text('ACTIVE'), findsOneWidget);
+        expect(find.text('Dr. Anitha Ramesh'), findsOneWidget);
+        expect(find.text('Cardiology'), findsWidgets);
+        expect(find.text('ACTIVE'), findsOneWidget);
 
-      // Quick action buttons
-      expect(find.widgetWithText(AppButton, 'Call'), findsOneWidget);
+        // Quick action buttons
+        expect(find.widgetWithText(AppButton, 'Call'), findsOneWidget);
 
-      // Credentials & Territory
-      expect(find.text('MCI/2012/12345'), findsOneWidget);
-      expect(find.text('Anna Nagar'), findsOneWidget);
-      expect(find.text('IMA'), findsOneWidget);
+        // Credentials & Territory
+        expect(find.text('MCI/2012/12345'), findsOneWidget);
+        expect(find.text('Anna Nagar'), findsOneWidget);
+        expect(find.text('IMA'), findsOneWidget);
 
-      // Phase 4 Visits Placeholder
-      expect(find.text('Visits & Product Interactions'), findsOneWidget);
-      expect(
-        find.text(
-          'Coming in Phase 4 — Field visits, discussed products, sample distributions, and prescription tracking.',
-        ),
-        findsOneWidget,
-      );
+        // Phase 4 Commercial & Follow-up Sections
+        expect(find.text('Purchase & Commercial Summary'), findsOneWidget);
+        expect(find.text('Upcoming Follow-ups'), findsOneWidget);
+        expect(find.text('Relationship Activity Timeline'), findsOneWidget);
 
-      // Edit Button
-      expect(
-        find.widgetWithText(AppButton, 'Edit Doctor Details'),
-        findsOneWidget,
-      );
-    });
+        // Edit Button
+        expect(
+          find.widgetWithText(AppButton, 'Edit Doctor Details'),
+          findsOneWidget,
+        );
+      },
+    );
   });
 }

@@ -16,7 +16,9 @@ class VisitTypeEnum(str, enum.Enum):
 
 class DoctorResponseEnum(str, enum.Enum):
     POSITIVE = "POSITIVE"
+    PRESCRIBING = "PRESCRIBING"
     NEUTRAL = "NEUTRAL"
+    HESITANT = "HESITANT"
     CRITICAL = "CRITICAL"
     INTERESTED = "INTERESTED"
 

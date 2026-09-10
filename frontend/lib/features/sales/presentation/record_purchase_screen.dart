@@ -34,7 +34,6 @@ class _RecordPurchaseScreenState extends ConsumerState<RecordPurchaseScreen> {
   final TextEditingController _notesController = TextEditingController();
 
   double _totalAmount = 0.0;
-  bool _customGst = false;
 
   @override
   void initState() {
@@ -57,16 +56,6 @@ class _RecordPurchaseScreenState extends ConsumerState<RecordPurchaseScreen> {
 
   void _recalculateTotal() {
     final amount = double.tryParse(_amountController.text.trim()) ?? 0.0;
-
-    if (!_customGst && amount > 0) {
-      // Default standard 18% GST estimate for convenience
-      final calculatedGst = (amount * 0.18).roundToDouble();
-      final newGst = calculatedGst.toStringAsFixed(0);
-      if (_gstController.text != newGst) {
-        _gstController.text = newGst;
-      }
-    }
-
     final gst = double.tryParse(_gstController.text.trim()) ?? 0.0;
     setState(() {
       _totalAmount = amount + gst;
@@ -108,7 +97,7 @@ class _RecordPurchaseScreenState extends ConsumerState<RecordPurchaseScreen> {
     if (mounted && success) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Purchase recorded successfully."),
+          content: Text("Purchase recorded"),
           backgroundColor: AppColors.success,
         ),
       );
@@ -265,9 +254,6 @@ class _RecordPurchaseScreenState extends ConsumerState<RecordPurchaseScreen> {
                         hint: "e.g. 9000",
                         keyboardType: TextInputType.number,
                         prefixIcon: Icons.receipt_long_outlined,
-                        onChanged: (_) {
-                          _customGst = true;
-                        },
                       ),
                       const Divider(height: AppSpacing.xl),
                       Row(
@@ -316,7 +302,7 @@ class _RecordPurchaseScreenState extends ConsumerState<RecordPurchaseScreen> {
                             ),
                           ),
                           Text(
-                            "Calculating / Not configured",
+                            "Not configured",
                             style: TextStyle(
                               fontSize: 13,
                               fontStyle: FontStyle.italic,

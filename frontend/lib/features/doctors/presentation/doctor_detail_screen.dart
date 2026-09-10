@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:rgwin_crm/core/theme/app_colors.dart';
 import 'package:rgwin_crm/core/theme/app_spacing.dart';
 import 'package:rgwin_crm/core/widgets/app_badge.dart';
@@ -8,7 +9,12 @@ import 'package:rgwin_crm/core/widgets/app_button.dart';
 import 'package:rgwin_crm/core/widgets/app_card.dart';
 import 'package:rgwin_crm/core/widgets/app_loading_indicator.dart';
 import 'package:rgwin_crm/core/widgets/section_header.dart';
+import 'package:rgwin_crm/core/widgets/spring_button.dart';
+import 'package:rgwin_crm/core/widgets/status_chip.dart';
 import 'package:rgwin_crm/features/doctors/presentation/doctor_controller.dart';
+import 'package:rgwin_crm/features/followups/presentation/follow_up_controller.dart';
+import 'package:rgwin_crm/features/sales/presentation/purchase_controller.dart';
+import 'package:rgwin_crm/features/visits/presentation/visit_controller.dart';
 
 class DoctorDetailScreen extends ConsumerWidget {
   final String doctorId;
@@ -56,6 +62,75 @@ class DoctorDetailScreen extends ConsumerWidget {
     }
 
     final doctor = match.first;
+
+    final visitState = ref.watch(visitControllerProvider);
+    final purchaseState = ref.watch(purchaseControllerProvider);
+    final followUpState = ref.watch(followUpControllerProvider);
+
+    final doctorVisits = visitState.visits
+        .where((v) => v.doctorId == doctorId)
+        .toList();
+    final doctorPurchases = purchaseState.purchases
+        .where((p) => p.doctorId == doctorId)
+        .toList();
+    final doctorFollowUps = followUpState.followUps
+        .where((f) => f.doctorId == doctorId)
+        .toList();
+    final pendingFollowUps = doctorFollowUps
+        .where((f) => f.status == "PENDING")
+        .toList();
+
+    final totalPurchaseVal = doctorPurchases.fold(
+      0.0,
+      (sum, p) => sum + p.purchaseAmount,
+    );
+    final latestPurchase = doctorPurchases.isNotEmpty
+        ? doctorPurchases.first
+        : null;
+
+    final List<_TimelineItem> timelineItems = [];
+    for (final v in doctorVisits) {
+      timelineItems.add(
+        _TimelineItem(
+          date: v.visitDatetime,
+          typeTitle: "Visit",
+          mainText: v.discussedProducts ?? "Field detailing visit",
+          subText:
+              "Doctor response: ${v.doctorResponse}${v.samplesGiven != null ? ' • Samples: ${v.samplesGiven}' : ''}",
+          icon: Icons.assignment_outlined,
+          badgeColor: AppColors.primaryDark,
+        ),
+      );
+    }
+    for (final p in doctorPurchases) {
+      timelineItems.add(
+        _TimelineItem(
+          date: p.purchaseDate,
+          typeTitle: "Purchase",
+          mainText:
+              "₹${NumberFormat('#,##,###.00').format(p.purchaseAmount)} + GST",
+          subText:
+              "Total: ₹${NumberFormat('#,##,###.00').format(p.totalAmount)} • PTS: Not configured",
+          icon: Icons.receipt_long_outlined,
+          badgeColor: AppColors.success,
+        ),
+      );
+    }
+    for (final f in doctorFollowUps) {
+      timelineItems.add(
+        _TimelineItem(
+          date: f.dueDate,
+          typeTitle: "Follow-up (${f.status})",
+          mainText: f.taskReason,
+          subText: f.isCompleted ? "Completed" : "Scheduled commitment",
+          icon: Icons.event_note_outlined,
+          badgeColor: f.isCompleted
+              ? AppColors.textSecondary
+              : AppColors.secondary,
+        ),
+      );
+    }
+    timelineItems.sort((a, b) => b.date.compareTo(a.date));
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -286,35 +361,47 @@ class DoctorDetailScreen extends ConsumerWidget {
               const SizedBox(height: AppSpacing.md),
 
               // 4. Commercial & Purchase Summary
-              const SectionHeader(
+              SectionHeader(
                 title: "Purchase & Commercial Summary",
                 subtitle: "Authoritative business performance",
+                actionLabel: "Record Purchase",
+                onAction: () =>
+                    context.push('/sales/record?doctor_id=${doctor.id}'),
               ),
               const SizedBox(height: AppSpacing.xs),
               AppCard(
                 child: Column(
-                  children: const [
+                  children: [
                     _DetailRow(
                       icon: Icons.account_balance_wallet_outlined,
                       label: "Total Purchases Booked",
-                      value: "Tracked from sales purchases",
+                      value: doctorPurchases.isEmpty
+                          ? "No purchases recorded"
+                          : "₹${NumberFormat('#,##,###.00').format(totalPurchaseVal)}",
                     ),
-                    _DetailRow(
+                    if (latestPurchase != null)
+                      _DetailRow(
+                        icon: Icons.shopping_bag_outlined,
+                        label: "Latest Purchase",
+                        value:
+                            "₹${NumberFormat('#,##,###.00').format(latestPurchase.purchaseAmount)} • ${DateFormat('dd MMM yyyy').format(latestPurchase.purchaseDate)}",
+                      ),
+                    const _DetailRow(
                       icon: Icons.currency_rupee,
                       label: "Realized Revenue",
-                      value: "Gross realized total",
+                      value: "Revenue unavailable",
                     ),
-                    _DetailRow(
+                    const _DetailRow(
                       icon: Icons.price_check_outlined,
                       label: "PTS Formula Rate",
                       value: "Not configured",
                     ),
-                    _DetailRow(
+                    const _DetailRow(
                       icon: Icons.pie_chart_outline,
                       label: "PTS Value",
                       value: "—",
                     ),
-                    _DetailRow(
+                    const _DetailRow(
                       icon: Icons.analytics_outlined,
                       label: "Net Profit / Loss",
                       value: "Insufficient data",
@@ -323,7 +410,113 @@ class DoctorDetailScreen extends ConsumerWidget {
                 ),
               ),
 
-              // 5. Field Notes (if available)
+              const SizedBox(height: AppSpacing.md),
+
+              // 5. Upcoming Follow-ups for this doctor
+              SectionHeader(
+                title: "Upcoming Follow-ups",
+                subtitle: "Scheduled commitments and tasks",
+                actionLabel: "View all",
+                onAction: () => context.go('/followups'),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              if (pendingFollowUps.isEmpty)
+                AppCard(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.sm,
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.event_available_outlined,
+                          size: 20,
+                          color: AppColors.primary,
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        const Expanded(
+                          child: Text(
+                            "No pending follow-ups for this doctor.",
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () => context.push(
+                            '/visits/add?doctor_id=${doctor.id}',
+                          ),
+                          child: const Text("Schedule"),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: pendingFollowUps.length,
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: AppSpacing.xs),
+                  itemBuilder: (context, index) {
+                    final fu = pendingFollowUps[index];
+                    return AppCard(
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryLight,
+                              borderRadius: BorderRadius.circular(AppRadius.sm),
+                            ),
+                            child: Text(
+                              DateFormat('dd MMM').format(fu.dueDate),
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primaryDark,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  fu.taskReason,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                          SpringButton(
+                            onTap: () {
+                              ref
+                                  .read(followUpControllerProvider.notifier)
+                                  .toggleStatus(fu.id);
+                            },
+                            scaleDown: 0.9,
+                            child: StatusChip.fromStatus("PENDING"),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+
+              // 6. Field Notes (if available)
               if (doctor.notes != null && doctor.notes!.isNotEmpty) ...[
                 const SizedBox(height: AppSpacing.md),
                 const SectionHeader(
@@ -345,52 +538,111 @@ class DoctorDetailScreen extends ConsumerWidget {
 
               const SizedBox(height: AppSpacing.md),
 
-              // 6. Recent Visits & Activity Hub
-              AppCard(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(AppSpacing.sm),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryLight,
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                        ),
-                        child: const Icon(
-                          Icons.assignment_outlined,
-                          color: AppColors.primaryDark,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.md),
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Visits & Product Interactions",
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                            SizedBox(height: 2),
-                            Text(
-                              "Coming in Phase 4 — Field visits, discussed products, sample distributions, and prescription tracking.",
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: AppColors.textMuted,
-                              ),
-                            ),
-                          ],
+              // 7. Chronological Relationship Activity Timeline
+              const SectionHeader(
+                title: "Relationship Activity Timeline",
+                subtitle: "Visits, purchases, and follow-ups in order",
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              if (timelineItems.isEmpty)
+                const AppCard(
+                  child: Padding(
+                    padding: EdgeInsets.all(AppSpacing.md),
+                    child: Center(
+                      child: Text(
+                        "No field activity recorded yet. Start by logging a visit or purchase.",
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
                         ),
                       ),
-                    ],
+                    ),
+                  ),
+                )
+              else
+                AppCard(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: timelineItems.length,
+                    separatorBuilder: (context, index) => const Divider(
+                      height: AppSpacing.lg,
+                      color: AppColors.border,
+                    ),
+                    itemBuilder: (context, index) {
+                      final item = timelineItems[index];
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: item.badgeColor.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(AppRadius.sm),
+                            ),
+                            child: Icon(
+                              item.icon,
+                              size: 18,
+                              color: item.badgeColor,
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.md),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      item.typeTitle,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        color: item.badgeColor,
+                                      ),
+                                    ),
+                                    Text(
+                                      DateFormat(
+                                        'dd MMM yyyy',
+                                      ).format(item.date),
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: AppColors.textMuted,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  item.mainText,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                if (item.subText != null &&
+                                    item.subText!.isNotEmpty) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    item.subText!,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ),
-              ),
 
               const SizedBox(height: AppSpacing.lg),
 
@@ -458,4 +710,22 @@ class _DetailRow extends StatelessWidget {
       ),
     );
   }
+}
+
+class _TimelineItem {
+  final DateTime date;
+  final String typeTitle;
+  final String mainText;
+  final String? subText;
+  final IconData icon;
+  final Color badgeColor;
+
+  const _TimelineItem({
+    required this.date,
+    required this.typeTitle,
+    required this.mainText,
+    this.subText,
+    required this.icon,
+    required this.badgeColor,
+  });
 }

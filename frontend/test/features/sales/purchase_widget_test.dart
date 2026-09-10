@@ -50,7 +50,7 @@ void main() {
       expect(result.isConfigured, false);
       expect(result.rate, isNull);
       expect(result.value, isNull);
-      expect(result.rateDisplayText, 'Calculating / Not configured');
+      expect(result.rateDisplayText, 'Not configured');
       expect(result.valueDisplayText, '—');
     });
   });
@@ -68,7 +68,7 @@ void main() {
 
         // Verify PTS placeholder is visible
         expect(find.text('PTS Rate'), findsOneWidget);
-        expect(find.text('Calculating / Not configured'), findsOneWidget);
+        expect(find.text('Not configured'), findsOneWidget);
         expect(find.text('PTS Value'), findsOneWidget);
 
         // Enter purchase amount
@@ -76,7 +76,12 @@ void main() {
         await tester.enterText(amountField, '50000');
         await tester.pumpAndSettle();
 
-        // Verify total payable is calculated (50000 + 18% GST 9000 = 59,000)
+        // Enter user-entered GST amount (Section 11: GST remains user-entered)
+        final gstField = find.widgetWithText(TextField, 'e.g. 9000');
+        await tester.enterText(gstField, '9000');
+        await tester.pumpAndSettle();
+
+        // Verify total payable is calculated (50000 + GST 9000 = 59,000)
         expect(find.text('Total Payable'), findsOneWidget);
         expect(find.text('₹59,000.00'), findsOneWidget);
 

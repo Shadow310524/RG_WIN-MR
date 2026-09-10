@@ -25,7 +25,7 @@ class PtsResult {
       rate: null,
       value: null,
       isConfigured: false,
-      rateDisplayText: "Calculating / Not configured",
+      rateDisplayText: "Not configured",
       valueDisplayText: "—",
     );
   }

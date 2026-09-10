@@ -12,6 +12,7 @@ import 'package:rgwin_crm/core/widgets/spring_button.dart';
 import 'package:rgwin_crm/core/widgets/status_chip.dart';
 import 'package:rgwin_crm/features/auth/presentation/auth_controller.dart';
 import 'package:rgwin_crm/features/doctors/presentation/doctor_controller.dart';
+import 'package:rgwin_crm/features/followups/presentation/follow_up_controller.dart';
 import 'package:rgwin_crm/features/sales/presentation/purchase_controller.dart';
 import 'package:rgwin_crm/features/visits/presentation/visit_controller.dart';
 
@@ -39,6 +40,7 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen> {
     final visitState = ref.watch(visitControllerProvider);
     final purchaseState = ref.watch(purchaseControllerProvider);
     final doctorState = ref.watch(doctorControllerProvider);
+    final followUpState = ref.watch(followUpControllerProvider);
 
     final userName =
         authState.user?.fullName.split(' ').first ?? "Representative";
@@ -52,6 +54,7 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen> {
           ref.read(visitControllerProvider.notifier).loadVisits(),
           ref.read(purchaseControllerProvider.notifier).loadPurchases(),
           ref.read(doctorControllerProvider.notifier).loadDoctors(),
+          ref.read(followUpControllerProvider.notifier).loadFollowUps(),
         ]);
       },
       child: SingleChildScrollView(
@@ -80,11 +83,15 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen> {
             _buildTodayActivity(todayVisits),
             const SizedBox(height: AppSpacing.xl),
 
-            // 6. Top Purchasing Doctors
+            // 6. Upcoming Follow-ups (Phase 4 Workflow)
+            _buildUpcomingFollowUps(followUpState),
+            const SizedBox(height: AppSpacing.xl),
+
+            // 7. Top Purchasing Doctors
             _buildTopPurchasingDoctors(doctorState, purchaseState),
             const SizedBox(height: AppSpacing.xl),
 
-            // 7. Commercial Health & PTS Snapshot
+            // 8. Commercial Health & PTS Snapshot
             _buildCommercialSnapshot(purchaseState),
           ],
         ),
@@ -474,6 +481,135 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen> {
                       ),
                     ),
                     StatusChip.fromStatus(v.status),
+                  ],
+                ),
+              );
+            },
+          ),
+      ],
+    );
+  }
+
+  Widget _buildUpcomingFollowUps(FollowUpState followUpState) {
+    final upcoming = followUpState.upcomingFollowUps;
+    final now = DateTime.now();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SectionHeader(
+          title: "Upcoming Follow-ups",
+          subtitle: "${upcoming.length} commitments scheduled",
+          actionLabel: "View all",
+          onAction: () => context.go('/followups'),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        if (upcoming.isEmpty)
+          AppCard(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryLight,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                  ),
+                  child: const Icon(
+                    Icons.event_available_outlined,
+                    color: AppColors.primaryDark,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                const Expanded(
+                  child: Text(
+                    "No pending follow-ups scheduled.",
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: upcoming.length > 3 ? 3 : upcoming.length,
+            separatorBuilder: (context, index) =>
+                const SizedBox(height: AppSpacing.sm),
+            itemBuilder: (context, index) {
+              final fu = upcoming[index];
+              String timeLabel;
+              if (fu.dueDate.year == now.year &&
+                  fu.dueDate.month == now.month &&
+                  fu.dueDate.day == now.day) {
+                timeLabel = "Today";
+              } else if (fu.dueDate.year == now.year &&
+                  fu.dueDate.month == now.month &&
+                  fu.dueDate.day == now.day + 1) {
+                timeLabel = "Tomorrow";
+              } else {
+                timeLabel = DateFormat('dd MMM').format(fu.dueDate);
+              }
+
+              return AppCard(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                onTap: () => context.go('/followups'),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: timeLabel == "Today"
+                            ? AppColors.warningLight
+                            : AppColors.primaryLight,
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                      ),
+                      child: Text(
+                        timeLabel,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: timeLabel == "Today"
+                              ? AppColors.warning
+                              : AppColors.primaryDark,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            fu.doctorName ?? "Doctor Follow-up",
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            fu.taskReason,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    StatusChip.fromStatus(fu.status),
                   ],
                 ),
               );
