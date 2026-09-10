@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:rgwin_crm/core/theme/app_colors.dart';
 import 'package:rgwin_crm/core/theme/app_spacing.dart';
+import 'package:rgwin_crm/core/widgets/spring_button.dart';
 
 class SectionHeader extends StatelessWidget {
   final String title;
@@ -35,9 +36,9 @@ class SectionHeader extends StatelessWidget {
                   title,
                   style: const TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w800,
                     color: AppColors.textPrimary,
-                    letterSpacing: -0.2,
+                    letterSpacing: -0.3,
                   ),
                 ),
                 if (subtitle != null) ...[
@@ -57,17 +58,29 @@ class SectionHeader extends StatelessWidget {
           if (trailing != null)
             trailing!
           else if (actionLabel != null && onAction != null)
-            GestureDetector(
+            SpringButton(
               onTap: onAction,
-              behavior: HitTestBehavior.opaque,
-              child: Padding(
-                padding: const EdgeInsets.only(left: AppSpacing.sm, bottom: 2),
+              scaleDown: 0.94,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm + 2,
+                  vertical: AppSpacing.xs,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(AppRadius.full),
+                  border: Border.all(
+                    color: AppColors.primary.withOpacity(0.25),
+                    width: 1,
+                  ),
+                ),
                 child: Text(
                   actionLabel!,
                   style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primaryDark,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primaryGlow,
+                    letterSpacing: -0.1,
                   ),
                 ),
               ),

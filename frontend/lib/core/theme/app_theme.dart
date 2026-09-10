@@ -6,19 +6,21 @@ import 'package:rgwin_crm/core/theme/app_typography.dart';
 class AppTheme {
   AppTheme._();
 
-  static ThemeData get lightTheme {
+  static ThemeData get lightTheme => darkTheme; // Default to God Mode Dark
+
+  static ThemeData get darkTheme {
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.light,
-      colorScheme: const ColorScheme.light(
+      brightness: Brightness.dark,
+      colorScheme: const ColorScheme.dark(
         primary: AppColors.primary,
         onPrimary: AppColors.textOnPrimary,
         primaryContainer: AppColors.primaryLight,
-        onPrimaryContainer: AppColors.primaryDark,
+        onPrimaryContainer: AppColors.primaryGlow,
         secondary: AppColors.secondary,
         onSecondary: AppColors.textOnPrimary,
         secondaryContainer: AppColors.secondaryLight,
-        onSecondaryContainer: AppColors.secondaryDark,
+        onSecondaryContainer: AppColors.secondary,
         surface: AppColors.surface,
         onSurface: AppColors.textPrimary,
         error: AppColors.error,
@@ -30,16 +32,16 @@ class AppTheme {
 
       // AppBar Theme
       appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.background,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
         centerTitle: false,
-        scrolledUnderElevation: 1,
-        shadowColor: Color(0x0D000000),
+        scrolledUnderElevation: 0,
         titleTextStyle: TextStyle(
           fontSize: 18.0,
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
+          letterSpacing: -0.2,
         ),
       ),
 
@@ -57,7 +59,7 @@ class AppTheme {
       // Input Decoration Theme
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.surface,
+        fillColor: AppColors.surfaceElevated,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.lg,
           vertical: AppSpacing.md,
@@ -108,7 +110,7 @@ class AppTheme {
       // OutlinedButton Theme
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.primaryDark,
+          foregroundColor: AppColors.primaryGlow,
           side: const BorderSide(color: AppColors.border, width: 1.2),
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.xl,
@@ -124,11 +126,11 @@ class AppTheme {
       // Navigation Bar (Mobile Bottom)
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.surface,
-        elevation: 3,
+        elevation: 0,
         indicatorColor: AppColors.primaryLight,
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return const IconThemeData(color: AppColors.primaryDark, size: 24);
+            return const IconThemeData(color: AppColors.primaryGlow, size: 24);
           }
           return const IconThemeData(color: AppColors.textSecondary, size: 22);
         }),
@@ -137,7 +139,7 @@ class AppTheme {
             return const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: AppColors.primaryDark,
+              color: AppColors.primaryGlow,
             );
           }
           return const TextStyle(
@@ -146,30 +148,6 @@ class AppTheme {
             color: AppColors.textSecondary,
           );
         }),
-      ),
-
-      // Navigation Rail (Tablet / Desktop Sidebar)
-      navigationRailTheme: const NavigationRailThemeData(
-        backgroundColor: AppColors.surface,
-        indicatorColor: AppColors.primaryLight,
-        selectedIconTheme: IconThemeData(
-          color: AppColors.primaryDark,
-          size: 24,
-        ),
-        unselectedIconTheme: IconThemeData(
-          color: AppColors.textSecondary,
-          size: 24,
-        ),
-        selectedLabelTextStyle: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
-          color: AppColors.primaryDark,
-        ),
-        unselectedLabelTextStyle: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
-          color: AppColors.textSecondary,
-        ),
       ),
 
       dividerTheme: const DividerThemeData(

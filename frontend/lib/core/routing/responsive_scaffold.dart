@@ -1,8 +1,9 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rgwin_crm/core/theme/app_colors.dart';
 import 'package:rgwin_crm/core/theme/app_spacing.dart';
-import 'package:rgwin_crm/core/widgets/app_badge.dart';
+import 'package:rgwin_crm/core/widgets/spring_button.dart';
 import 'package:rgwin_crm/features/auth/presentation/auth_controller.dart';
 
 class NavigationItem {
@@ -19,6 +20,7 @@ class NavigationItem {
   });
 }
 
+/// God Mode Responsive Scaffold with Floating Frosted Glass Dock and Tactile Physics.
 class ResponsiveScaffold extends ConsumerWidget {
   final Widget body;
   final int currentIndex;
@@ -48,16 +50,54 @@ class ResponsiveScaffold extends ConsumerWidget {
     final defaultActions = <Widget>[
       if (authState.user != null) ...[
         Center(
-          child: AppBadge(
-            label: authState.user!.role.toUpperCase(),
-            variant: authState.user!.role.toUpperCase() == 'ADMIN'
-                ? AppBadgeVariant.active
-                : AppBadgeVariant.info,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppColors.primaryLight.withOpacity(0.6),
+              borderRadius: BorderRadius.circular(AppRadius.full),
+              border: Border.all(
+                color: AppColors.primaryGlow.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: AppColors.success,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.success.withOpacity(0.8),
+                        blurRadius: 4,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  authState.user!.role.toUpperCase(),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         const SizedBox(width: AppSpacing.sm),
         IconButton(
-          icon: const Icon(Icons.logout_rounded, size: 20),
+          icon: const Icon(
+            Icons.logout_rounded,
+            size: 20,
+            color: AppColors.textSecondary,
+          ),
           tooltip: 'Sign Out (${authState.user!.fullName})',
           onPressed: () => ref.read(authProvider.notifier).logout(),
         ),
@@ -73,17 +113,25 @@ class ResponsiveScaffold extends ConsumerWidget {
 
         final scaffoldContent = Scaffold(
           backgroundColor: AppColors.background,
+          extendBody: true, // Allows content behind the floating glass dock
           appBar: AppBar(
-            backgroundColor: AppColors.surface,
+            backgroundColor: AppColors.background.withOpacity(0.9),
             elevation: 0,
             title: Row(
               children: [
                 Container(
-                  width: 32,
-                  height: 32,
+                  width: 34,
+                  height: 34,
                   decoration: BoxDecoration(
-                    color: AppColors.primary,
+                    gradient: AppColors.primaryGradient,
                     borderRadius: BorderRadius.circular(AppRadius.sm),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withOpacity(0.4),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
                   ),
                   child: const Center(
                     child: Text(
@@ -91,7 +139,7 @@ class ResponsiveScaffold extends ConsumerWidget {
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w900,
-                        fontSize: 13,
+                        fontSize: 14,
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -101,9 +149,10 @@ class ResponsiveScaffold extends ConsumerWidget {
                 Text(
                   title ?? items[currentIndex].label,
                   style: const TextStyle(
-                    fontSize: 17,
+                    fontSize: 18,
                     fontWeight: FontWeight.w800,
                     color: AppColors.textPrimary,
+                    letterSpacing: -0.3,
                   ),
                 ),
               ],
@@ -112,35 +161,31 @@ class ResponsiveScaffold extends ConsumerWidget {
           ),
           body: body,
           floatingActionButton: floatingActionButton,
-          bottomNavigationBar: NavigationBar(
-            selectedIndex: currentIndex,
-            onDestinationSelected: onNavigationIndexChanged,
-            destinations: items.map((item) {
-              return NavigationDestination(
-                icon: Icon(item.icon),
-                selectedIcon: Icon(item.selectedIcon),
-                label: item.label,
-              );
-            }).toList(),
+          bottomNavigationBar: _FloatingGlassDock(
+            currentIndex: currentIndex,
+            items: items,
+            onSelected: onNavigationIndexChanged,
           ),
         );
 
         if (isWideScreen) {
-          // On desktop/Chrome, center the mobile viewport in a clean mobile frame
+          // On desktop/Chrome, center the mobile viewport in a sleek luxury frame
           return Scaffold(
-            backgroundColor: const Color(
-              0xFFF0EDF9,
-            ), // Subtle lavender tinted backdrop
+            backgroundColor: const Color(0xFF06040C),
             body: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: kMaxMobileWidth),
                 child: Container(
                   decoration: BoxDecoration(
+                    border: Border.all(
+                      color: AppColors.borderHighlight.withOpacity(0.08),
+                      width: 1,
+                    ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
-                        blurRadius: 24,
-                        offset: const Offset(0, 4),
+                        color: Colors.black.withOpacity(0.6),
+                        blurRadius: 36,
+                        offset: const Offset(0, 8),
                       ),
                     ],
                   ),
@@ -153,6 +198,123 @@ class ResponsiveScaffold extends ConsumerWidget {
 
         return scaffoldContent;
       },
+    );
+  }
+}
+
+/// Floating Island Glass Dock with smooth active indicator and tactile tap springs.
+class _FloatingGlassDock extends StatelessWidget {
+  final int currentIndex;
+  final List<NavigationItem> items;
+  final ValueChanged<int> onSelected;
+
+  const _FloatingGlassDock({
+    required this.currentIndex,
+    required this.items,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(28),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+            child: Container(
+              height: 66,
+              decoration: BoxDecoration(
+                color: AppColors.surfaceElevated.withOpacity(0.85),
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(
+                  color: AppColors.borderHighlight.withOpacity(0.18),
+                  width: 1.2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.4),
+                    blurRadius: 24,
+                    offset: const Offset(0, 8),
+                  ),
+                  BoxShadow(
+                    color: AppColors.primaryGlow.withOpacity(0.06),
+                    blurRadius: 20,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: List.generate(items.length, (index) {
+                  final isSelected = index == currentIndex;
+                  final item = items[index];
+
+                  return Expanded(
+                    child: SpringButton(
+                      scaleDown: 0.90,
+                      onTap: () => onSelected(index),
+                      child: Container(
+                        color: Colors.transparent,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              curve: Curves.easeOutCubic,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: isSelected ? 12 : 6,
+                                vertical: isSelected ? 5 : 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? AppColors.primary.withOpacity(0.18)
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(16),
+                                border: isSelected
+                                    ? Border.all(
+                                        color: AppColors.primaryGlow
+                                            .withOpacity(0.4),
+                                        width: 1,
+                                      )
+                                    : null,
+                              ),
+                              child: Icon(
+                                isSelected ? item.selectedIcon : item.icon,
+                                size: isSelected ? 22 : 21,
+                                color: isSelected
+                                    ? AppColors.primaryGlow
+                                    : AppColors.textSecondary,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            AnimatedDefaultTextStyle(
+                              duration: const Duration(milliseconds: 200),
+                              curve: Curves.easeOutCubic,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: isSelected
+                                    ? FontWeight.w800
+                                    : FontWeight.w500,
+                                color: isSelected
+                                    ? AppColors.textPrimary
+                                    : AppColors.textMuted,
+                                letterSpacing: -0.1,
+                              ),
+                              child: Text(item.label),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
