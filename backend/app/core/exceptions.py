@@ -22,31 +22,31 @@ class RGWinException(Exception):
 
 
 class NotFoundException(RGWinException):
-    def __init__(self, message: str = "Resource not found", details: Optional[Any] = None):
+    def __init__(self, message: str = "Resource not found", details: Optional[Any] = None, code: str = "NOT_FOUND"):
         super().__init__(
             message=message,
             status_code=status.HTTP_404_NOT_FOUND,
-            code="NOT_FOUND",
+            code=code,
             details=details,
         )
 
 
 class ConflictException(RGWinException):
-    def __init__(self, message: str = "Resource conflict detected", details: Optional[Any] = None):
+    def __init__(self, message: str = "Resource conflict detected", details: Optional[Any] = None, code: str = "CONFLICT"):
         super().__init__(
             message=message,
             status_code=status.HTTP_409_CONFLICT,
-            code="CONFLICT",
+            code=code,
             details=details,
         )
 
 
 class ValidationException(RGWinException):
-    def __init__(self, message: str = "Validation failed", details: Optional[Any] = None):
+    def __init__(self, message: str = "Validation failed", details: Optional[Any] = None, code: str = "VALIDATION_ERROR"):
         super().__init__(
             message=message,
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            code="VALIDATION_ERROR",
+            code=code,
             details=details,
         )
 
