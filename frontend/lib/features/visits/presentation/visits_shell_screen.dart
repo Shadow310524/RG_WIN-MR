@@ -29,7 +29,7 @@ class VisitsShellScreen extends ConsumerWidget {
           "Log Visit",
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
-        onPressed: () => context.go('/visits/add'),
+        onPressed: () => context.push('/visits/add'),
       ),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -116,7 +116,7 @@ class VisitsShellScreen extends ConsumerWidget {
                         ? "No visits scheduled or recorded for today."
                         : "Start by recording your first doctor field visit.",
                     actionLabel: "Log Doctor Visit",
-                    onActionPressed: () => context.go('/visits/add'),
+                    onActionPressed: () => context.push('/visits/add'),
                   ),
                 )
               else
@@ -194,6 +194,11 @@ class _VisitCard extends StatelessWidget {
 
     return AppCard(
       padding: const EdgeInsets.all(AppSpacing.md),
+      onTap: () {
+        if (visit.doctorId.isNotEmpty) {
+          context.push('/doctors/${visit.doctorId}');
+        }
+      },
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

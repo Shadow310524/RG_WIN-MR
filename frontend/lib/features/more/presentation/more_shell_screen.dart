@@ -113,7 +113,7 @@ class MoreShellScreen extends ConsumerWidget {
                       title: "Commercial Analytics",
                       subtitle: "Doctor, area & territory performance insights",
                       iconColor: AppColors.primaryDark,
-                      onTap: () => context.go('/analytics'),
+                      onTap: () => context.push('/analytics'),
                     ),
                     const Divider(height: 1, color: AppColors.border),
                     _MenuTile(
@@ -121,7 +121,7 @@ class MoreShellScreen extends ConsumerWidget {
                       title: "Field Expenses",
                       subtitle: "Travel, fuel, food and promotion claims",
                       iconColor: AppColors.warning,
-                      onTap: () => context.go('/expenses/add'),
+                      onTap: () => context.push('/expenses/add'),
                     ),
                     const Divider(height: 1, color: AppColors.border),
                     _MenuTile(
@@ -151,7 +151,7 @@ class MoreShellScreen extends ConsumerWidget {
                       title: "Follow-ups & Reminders",
                       subtitle: "Scheduled doctor visits and call reminders",
                       iconColor: AppColors.primaryDark,
-                      onTap: () => context.go('/followups'),
+                      onTap: () => context.push('/followups'),
                     ),
                     const Divider(height: 1, color: AppColors.border),
                     _MenuTile(
@@ -159,7 +159,7 @@ class MoreShellScreen extends ConsumerWidget {
                       title: "Prescriptions",
                       subtitle: "Doctor prescribing trends and habits",
                       iconColor: AppColors.secondary,
-                      onTap: () => context.go('/prescriptions'),
+                      onTap: () => context.push('/prescriptions'),
                     ),
                     const Divider(height: 1, color: AppColors.border),
                     _MenuTile(
@@ -167,7 +167,7 @@ class MoreShellScreen extends ConsumerWidget {
                       title: "Orders",
                       subtitle: "Dispatched and pending hospital orders",
                       iconColor: AppColors.info,
-                      onTap: () => context.go('/orders'),
+                      onTap: () => context.push('/orders'),
                     ),
                   ],
                 ),
@@ -187,7 +187,7 @@ class MoreShellScreen extends ConsumerWidget {
                   title: "Product References",
                   subtitle: "Read-only 31-product master catalog & details",
                   iconColor: AppColors.primaryDark,
-                  onTap: () => context.go('/products'),
+                  onTap: () => context.push('/products'),
                 ),
               ),
               const SizedBox(height: AppSpacing.xl),

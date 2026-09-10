@@ -29,7 +29,7 @@ class SalesShellScreen extends ConsumerWidget {
           "Record Purchase",
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
-        onPressed: () => context.go('/sales/record'),
+        onPressed: () => context.push('/sales/record'),
       ),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -138,7 +138,7 @@ class SalesShellScreen extends ConsumerWidget {
                 title: "Recent Purchases",
                 subtitle: "Overall commercial transactions",
                 actionLabel: state.purchases.isNotEmpty ? "Record New" : null,
-                onAction: () => context.go('/sales/record'),
+                onAction: () => context.push('/sales/record'),
               ),
               const SizedBox(height: AppSpacing.sm),
 
@@ -157,7 +157,7 @@ class SalesShellScreen extends ConsumerWidget {
                     description:
                         "Record overall purchase amounts from doctors or medical stores without entering line-by-line items.",
                     actionLabel: "Record First Purchase",
-                    onActionPressed: () => context.go('/sales/record'),
+                    onActionPressed: () => context.push('/sales/record'),
                   ),
                 )
               else
@@ -170,6 +170,12 @@ class SalesShellScreen extends ConsumerWidget {
                   itemBuilder: (context, index) {
                     final item = state.purchases[index];
                     return AppCard(
+                      onTap: () {
+                        if (item.doctorId != null &&
+                            item.doctorId!.isNotEmpty) {
+                          context.push('/doctors/${item.doctorId}');
+                        }
+                      },
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [

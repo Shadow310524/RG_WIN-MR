@@ -7,6 +7,7 @@ import 'package:rgwin_crm/core/theme/app_spacing.dart';
 import 'package:rgwin_crm/core/widgets/app_button.dart';
 import 'package:rgwin_crm/core/widgets/app_card.dart';
 import 'package:rgwin_crm/core/widgets/app_text_field.dart';
+import 'package:rgwin_crm/core/widgets/discard_dialog.dart';
 import 'package:rgwin_crm/core/widgets/section_header.dart';
 import 'package:rgwin_crm/features/doctors/presentation/doctor_controller.dart';
 import 'package:rgwin_crm/features/sales/presentation/purchase_controller.dart';
@@ -101,7 +102,32 @@ class _RecordPurchaseScreenState extends ConsumerState<RecordPurchaseScreen> {
           backgroundColor: AppColors.success,
         ),
       );
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go('/sales');
+      }
+    }
+  }
+
+  bool get _hasUnsavedChanges {
+    final dirtyDoctor =
+        widget.preselectedDoctorId == null && _selectedDoctorId != null;
+    final dirtyAmount = _amountController.text.trim().isNotEmpty;
+    final dirtyGst = _gstController.text.trim().isNotEmpty;
+    final dirtyNotes = _notesController.text.trim().isNotEmpty;
+    return dirtyDoctor || dirtyAmount || dirtyGst || dirtyNotes;
+  }
+
+  Future<void> _handleBack() async {
+    if (_hasUnsavedChanges) {
+      final shouldDiscard = await showDiscardChangesDialog(context);
+      if (!shouldDiscard || !mounted) return;
+    }
+    if (context.canPop()) {
       context.pop();
+    } else {
+      context.go('/sales');
     }
   }
 
@@ -121,272 +147,287 @@ class _RecordPurchaseScreenState extends ConsumerState<RecordPurchaseScreen> {
       }
     }
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text("Record Purchase"),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        await _handleBack();
+      },
+      child: Scaffold(
         backgroundColor: AppColors.background,
-        centerTitle: false,
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Doctor / Medical Entity
-                const SectionHeader(
-                  title: "Doctor / Medical",
-                  subtitle: "Select the purchaser or medical store",
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                AppCard(
-                  isGlass: true,
-                  child: DropdownButtonFormField<String>(
-                    dropdownColor: AppColors.surfaceElevated,
-                    initialValue: _selectedDoctorId,
-                    decoration: const InputDecoration(
-                      labelText: "Doctor / Clinic",
-                      prefixIcon: Icon(Icons.local_hospital_outlined, size: 20),
-                    ),
-                    items: [
-                      const DropdownMenuItem<String>(
-                        value: null,
-                        child: Text("Direct / General Medical Store"),
-                      ),
-                      ...doctorState.doctors.map(
-                        (d) => DropdownMenuItem<String>(
-                          value: d.id,
-                          child: Text(
-                            "${d.name} (${d.clinicName ?? d.specialization})",
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+        appBar: AppBar(
+          title: const Text("Record Purchase"),
+          backgroundColor: AppColors.background,
+          centerTitle: false,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_rounded),
+            tooltip: "Back",
+            onPressed: _handleBack,
+          ),
+        ),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Doctor / Medical Entity
+                  const SectionHeader(
+                    title: "Doctor / Medical",
+                    subtitle: "Select the purchaser or medical store",
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  AppCard(
+                    isGlass: true,
+                    child: DropdownButtonFormField<String>(
+                      dropdownColor: AppColors.surfaceElevated,
+                      initialValue: _selectedDoctorId,
+                      decoration: const InputDecoration(
+                        labelText: "Doctor / Clinic",
+                        prefixIcon: Icon(
+                          Icons.local_hospital_outlined,
+                          size: 20,
                         ),
                       ),
-                    ],
-                    onChanged: (val) {
-                      setState(() {
-                        _selectedDoctorId = val;
-                        final doc = doctorState.doctors
-                            .where((d) => d.id == val)
-                            .firstOrNull;
-                        _selectedDoctorName = doc?.name;
-                        _selectedClinicName = doc?.clinicName;
-                      });
-                    },
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.lg),
-
-                // Purchase Date
-                const SectionHeader(title: "Purchase Date"),
-                const SizedBox(height: AppSpacing.xs),
-                AppCard(
-                  child: ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryLight,
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                      ),
-                      child: const Icon(
-                        Icons.calendar_today_outlined,
-                        color: AppColors.primaryDark,
-                        size: 20,
-                      ),
+                      items: [
+                        const DropdownMenuItem<String>(
+                          value: null,
+                          child: Text("Direct / General Medical Store"),
+                        ),
+                        ...doctorState.doctors.map(
+                          (d) => DropdownMenuItem<String>(
+                            value: d.id,
+                            child: Text(
+                              "${d.name} (${d.clinicName ?? d.specialization})",
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ),
+                      ],
+                      onChanged: (val) {
+                        setState(() {
+                          _selectedDoctorId = val;
+                          final doc = doctorState.doctors
+                              .where((d) => d.id == val)
+                              .firstOrNull;
+                          _selectedDoctorName = doc?.name;
+                          _selectedClinicName = doc?.clinicName;
+                        });
+                      },
                     ),
-                    title: const Text(
-                      "Date of Purchase",
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    subtitle: Text(
-                      DateFormat('EEE, dd MMM yyyy').format(_purchaseDate),
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-                    onTap: _pickDate,
                   ),
-                ),
-                const SizedBox(height: AppSpacing.lg),
+                  const SizedBox(height: AppSpacing.lg),
 
-                // Commercial Overall Value
-                const SectionHeader(
-                  title: "Overall Purchase Value",
-                  subtitle:
-                      "Enter total amount without line-by-line product entry",
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                AppCard(
-                  child: Column(
-                    children: [
-                      AppTextField(
-                        controller: _amountController,
-                        label: "Purchase Amount (₹)",
-                        hint: "e.g. 50000",
-                        keyboardType: TextInputType.number,
-                        prefixIcon: Icons.currency_rupee,
-                        validator: (val) {
-                          if (val == null || val.trim().isEmpty) {
-                            return "Please enter purchase amount";
-                          }
-                          final parsed = double.tryParse(val.trim());
-                          if (parsed == null || parsed <= 0) {
-                            return "Please enter a valid positive amount";
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      AppTextField(
-                        controller: _gstController,
-                        label: "GST Amount (₹)",
-                        hint: "e.g. 9000",
-                        keyboardType: TextInputType.number,
-                        prefixIcon: Icons.receipt_long_outlined,
-                      ),
-                      const Divider(height: AppSpacing.xl),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            "Total Payable",
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                          Text(
-                            "₹${NumberFormat('#,##,###.00').format(_totalAmount)}",
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w900,
-                              color: AppColors.primaryDark,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.lg),
-
-                // PTS Calculation Architecture Placeholder
-                const SectionHeader(
-                  title: "PTS Calculation",
-                  subtitle: "Price To Stockist rate and calculated value",
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                AppCard(
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: const [
-                          Text(
-                            "PTS Rate",
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                          Text(
-                            "Not configured",
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontStyle: FontStyle.italic,
-                              color: AppColors.textMuted,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: const [
-                          Text(
-                            "PTS Value",
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                          Text(
-                            "—",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textMuted,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: AppSpacing.xs),
-                      Container(
-                        padding: const EdgeInsets.all(AppSpacing.sm),
+                  // Purchase Date
+                  const SectionHeader(title: "Purchase Date"),
+                  const SizedBox(height: AppSpacing.xs),
+                  AppCard(
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Container(
+                        padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppColors.primaryVeryLight,
+                          color: AppColors.primaryLight,
                           borderRadius: BorderRadius.circular(AppRadius.sm),
                         ),
-                        child: const Row(
+                        child: const Icon(
+                          Icons.calendar_today_outlined,
+                          color: AppColors.primaryDark,
+                          size: 20,
+                        ),
+                      ),
+                      title: const Text(
+                        "Date of Purchase",
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      subtitle: Text(
+                        DateFormat('EEE, dd MMM yyyy').format(_purchaseDate),
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                      onTap: _pickDate,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+
+                  // Commercial Overall Value
+                  const SectionHeader(
+                    title: "Overall Purchase Value",
+                    subtitle:
+                        "Enter total amount without line-by-line product entry",
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  AppCard(
+                    child: Column(
+                      children: [
+                        AppTextField(
+                          controller: _amountController,
+                          label: "Purchase Amount (₹)",
+                          hint: "e.g. 50000",
+                          keyboardType: TextInputType.number,
+                          prefixIcon: Icons.currency_rupee,
+                          validator: (val) {
+                            if (val == null || val.trim().isEmpty) {
+                              return "Please enter purchase amount";
+                            }
+                            final parsed = double.tryParse(val.trim());
+                            if (parsed == null || parsed <= 0) {
+                              return "Please enter a valid positive amount";
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        AppTextField(
+                          controller: _gstController,
+                          label: "GST Amount (₹)",
+                          hint: "e.g. 9000",
+                          keyboardType: TextInputType.number,
+                          prefixIcon: Icons.receipt_long_outlined,
+                        ),
+                        const Divider(height: AppSpacing.xl),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Icon(
-                              Icons.info_outline,
-                              size: 14,
-                              color: AppColors.primaryDark,
+                            const Text(
+                              "Total Payable",
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                              ),
                             ),
-                            SizedBox(width: AppSpacing.xs),
-                            Expanded(
-                              child: Text(
-                                "Exact PTS formula pending business configuration. Value will auto-calculate when formula is finalized.",
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: AppColors.textSecondary,
-                                ),
+                            Text(
+                              "₹${NumberFormat('#,##,###.00').format(_totalAmount)}",
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w900,
+                                color: AppColors.primaryDark,
                               ),
                             ),
                           ],
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: AppSpacing.lg),
+                  const SizedBox(height: AppSpacing.lg),
 
-                // Optional Notes
-                const SectionHeader(title: "Additional Notes"),
-                const SizedBox(height: AppSpacing.xs),
-                AppCard(
-                  child: AppTextField(
-                    controller: _notesController,
-                    label: "Notes / Reference (Optional)",
-                    hint: "e.g. Invoice #1024, special payment terms",
-                    maxLines: 2,
+                  // PTS Calculation Architecture Placeholder
+                  const SectionHeader(
+                    title: "PTS Calculation",
+                    subtitle: "Price To Stockist rate and calculated value",
                   ),
-                ),
-                const SizedBox(height: AppSpacing.xl),
+                  const SizedBox(height: AppSpacing.xs),
+                  AppCard(
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: const [
+                            Text(
+                              "PTS Rate",
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            Text(
+                              "Not configured",
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontStyle: FontStyle.italic,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: const [
+                            Text(
+                              "PTS Value",
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            Text(
+                              "—",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        Container(
+                          padding: const EdgeInsets.all(AppSpacing.sm),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryVeryLight,
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(
+                                Icons.info_outline,
+                                size: 14,
+                                color: AppColors.primaryDark,
+                              ),
+                              SizedBox(width: AppSpacing.xs),
+                              Expanded(
+                                child: Text(
+                                  "Exact PTS formula pending business configuration. Value will auto-calculate when formula is finalized.",
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
 
-                // Submit Button
-                AppButton(
-                  label: "Save Purchase",
-                  icon: Icons.check,
-                  isLoading: isSaving,
-                  fullWidth: true,
-                  onPressed: isSaving ? null : _handleSubmit,
-                ),
-                const SizedBox(height: AppSpacing.xl),
-              ],
+                  // Optional Notes
+                  const SectionHeader(title: "Additional Notes"),
+                  const SizedBox(height: AppSpacing.xs),
+                  AppCard(
+                    child: AppTextField(
+                      controller: _notesController,
+                      label: "Notes / Reference (Optional)",
+                      hint: "e.g. Invoice #1024, special payment terms",
+                      maxLines: 2,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+
+                  // Submit Button
+                  AppButton(
+                    label: "Save Purchase",
+                    icon: Icons.check,
+                    isLoading: isSaving,
+                    fullWidth: true,
+                    onPressed: isSaving ? null : _handleSubmit,
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                ],
+              ),
             ),
           ),
         ),

@@ -213,7 +213,7 @@ class _DoctorsShellScreenState extends ConsumerState<DoctorsShellScreen> {
       backgroundColor: AppColors.background,
       floatingActionButton: FloatingActionButton.extended(
         key: const Key('add_doctor_fab'),
-        onPressed: () => context.go('/doctors/add'),
+        onPressed: () => context.push('/doctors/add'),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
@@ -440,7 +440,7 @@ class _DoctorsShellScreenState extends ConsumerState<DoctorsShellScreen> {
                           ? "No matching doctor profiles for '${state.searchQuery}'."
                           : "No doctors have been enrolled in your territory yet.",
                       actionLabel: "Add Doctor",
-                      onActionPressed: () => context.go('/doctors/add'),
+                      onActionPressed: () => context.push('/doctors/add'),
                     );
                   }
 
@@ -464,7 +464,7 @@ class _DoctorsShellScreenState extends ConsumerState<DoctorsShellScreen> {
                         final doctor = state.doctors[index];
                         return _DoctorCard(
                           doctor: doctor,
-                          onTap: () => context.go('/doctors/${doctor.id}'),
+                          onTap: () => context.push('/doctors/${doctor.id}'),
                         );
                       },
                     ),
@@ -601,13 +601,13 @@ class _DoctorCard extends StatelessWidget {
                 ],
                 onSelected: (val) {
                   if (val == "view") {
-                    context.go('/doctors/${doctor.id}');
+                    context.push('/doctors/${doctor.id}');
                   } else if (val == "visit") {
-                    context.go('/visits/add?doctor_id=${doctor.id}');
+                    context.push('/visits/add?doctor_id=${doctor.id}');
                   } else if (val == "purchase") {
-                    context.go('/sales/record?doctor_id=${doctor.id}');
+                    context.push('/sales/record?doctor_id=${doctor.id}');
                   } else if (val == "edit") {
-                    context.go('/doctors/${doctor.id}/edit');
+                    context.push('/doctors/${doctor.id}/edit');
                   }
                 },
               ),
@@ -717,7 +717,7 @@ class _DoctorCard extends StatelessWidget {
                 children: [
                   SpringButton(
                     onTap: () =>
-                        context.go('/visits/add?doctor_id=${doctor.id}'),
+                        context.push('/visits/add?doctor_id=${doctor.id}'),
                     scaleDown: 0.95,
                     child: Container(
                       padding: const EdgeInsets.symmetric(

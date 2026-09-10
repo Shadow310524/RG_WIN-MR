@@ -28,153 +28,177 @@ class _FollowupsShellScreenState extends ConsumerState<FollowupsShellScreen> {
     final state = ref.watch(followUpControllerProvider);
     final followUps = state.filteredFollowUps;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text("Follow-up Tasks"),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          context.go('/more');
+        }
+      },
+      child: Scaffold(
         backgroundColor: AppColors.background,
-        elevation: 0,
-        centerTitle: false,
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Filter Pills Header
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.lg,
-                vertical: AppSpacing.sm,
-              ),
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
-                  border: Border.all(color: AppColors.border),
+        appBar: AppBar(
+          title: const Text("Follow-up Tasks"),
+          backgroundColor: AppColors.background,
+          elevation: 0,
+          centerTitle: false,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_rounded),
+            tooltip: "Back",
+            onPressed: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go('/more');
+              }
+            },
+          ),
+        ),
+        body: SafeArea(
+          child: Column(
+            children: [
+              // Filter Pills Header
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.lg,
+                  vertical: AppSpacing.sm,
                 ),
-                child: Row(
-                  children: _tabs.map((tab) {
-                    final key = tab.toUpperCase();
-                    final isSelected = state.activeFilter == key;
-                    final count = tab == "All"
-                        ? state.followUps.length
-                        : (tab == "Pending"
-                              ? state.pendingFollowUps.length
-                              : state.completedFollowUps.length);
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Row(
+                    children: _tabs.map((tab) {
+                      final key = tab.toUpperCase();
+                      final isSelected = state.activeFilter == key;
+                      final count = tab == "All"
+                          ? state.followUps.length
+                          : (tab == "Pending"
+                                ? state.pendingFollowUps.length
+                                : state.completedFollowUps.length);
 
-                    return Expanded(
-                      child: SpringButton(
-                        onTap: () {
-                          ref
-                              .read(followUpControllerProvider.notifier)
-                              .setFilter(key);
-                        },
-                        scaleDown: 0.95,
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 180),
-                          curve: Curves.easeOutCubic,
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? AppColors.primaryLight
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(AppRadius.pill),
-                          ),
-                          child: Center(
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  tab,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: isSelected
-                                        ? FontWeight.w700
-                                        : FontWeight.w500,
-                                    color: isSelected
-                                        ? AppColors.primaryDark
-                                        : AppColors.textSecondary,
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 1,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: isSelected
-                                        ? AppColors.primary
-                                        : AppColors.surfaceElevated,
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Text(
-                                    "$count",
+                      return Expanded(
+                        child: SpringButton(
+                          onTap: () {
+                            ref
+                                .read(followUpControllerProvider.notifier)
+                                .setFilter(key);
+                          },
+                          scaleDown: 0.95,
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 180),
+                            curve: Curves.easeOutCubic,
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? AppColors.primaryLight
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
+                              ),
+                            ),
+                            child: Center(
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    tab,
                                     style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w700,
+                                      fontSize: 12,
+                                      fontWeight: isSelected
+                                          ? FontWeight.w700
+                                          : FontWeight.w500,
                                       color: isSelected
-                                          ? Colors.white
-                                          : AppColors.textMuted,
+                                          ? AppColors.primaryDark
+                                          : AppColors.textSecondary,
                                     ),
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 4),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 1,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? AppColors.primary
+                                          : AppColors.surfaceElevated,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Text(
+                                      "$count",
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: isSelected
+                                            ? Colors.white
+                                            : AppColors.textMuted,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    );
-                  }).toList(),
+                      );
+                    }).toList(),
+                  ),
                 ),
               ),
-            ),
 
-            const Divider(height: 1, color: AppColors.border),
+              const Divider(height: 1, color: AppColors.border),
 
-            // Content List
-            Expanded(
-              child: RefreshIndicator(
-                color: AppColors.primary,
-                backgroundColor: AppColors.surface,
-                onRefresh: () async {
-                  await ref
-                      .read(followUpControllerProvider.notifier)
-                      .loadFollowUps();
-                },
-                child: state.isLoading && state.followUps.isEmpty
-                    ? const Center(
-                        child: AppLoadingIndicator(
-                          message: "Loading follow-up tasks...",
-                        ),
-                      )
-                    : followUps.isEmpty
-                    ? ListView(
-                        children: const [
-                          Padding(
-                            padding: EdgeInsets.all(AppSpacing.xxl),
-                            child: AppEmptyState(
-                              icon: Icons.event_available_outlined,
-                              title: "No follow-ups found",
-                              description:
-                                  "Schedule follow-ups during doctor visits to stay on top of field commitments.",
-                            ),
+              // Content List
+              Expanded(
+                child: RefreshIndicator(
+                  color: AppColors.primary,
+                  backgroundColor: AppColors.surface,
+                  onRefresh: () async {
+                    await ref
+                        .read(followUpControllerProvider.notifier)
+                        .loadFollowUps();
+                  },
+                  child: state.isLoading && state.followUps.isEmpty
+                      ? const Center(
+                          child: AppLoadingIndicator(
+                            message: "Loading follow-up tasks...",
                           ),
-                        ],
-                      )
-                    : ListView.separated(
-                        padding: const EdgeInsets.all(AppSpacing.lg),
-                        itemCount: followUps.length,
-                        separatorBuilder: (context, index) =>
-                            const SizedBox(height: AppSpacing.sm),
-                        itemBuilder: (context, index) {
-                          final item = followUps[index];
-                          return _FollowUpCard(item: item);
-                        },
-                      ),
+                        )
+                      : followUps.isEmpty
+                      ? ListView(
+                          children: const [
+                            Padding(
+                              padding: EdgeInsets.all(AppSpacing.xxl),
+                              child: AppEmptyState(
+                                icon: Icons.event_available_outlined,
+                                title: "No follow-ups found",
+                                description:
+                                    "Schedule follow-ups during doctor visits to stay on top of field commitments.",
+                              ),
+                            ),
+                          ],
+                        )
+                      : ListView.separated(
+                          padding: const EdgeInsets.all(AppSpacing.lg),
+                          itemCount: followUps.length,
+                          separatorBuilder: (context, index) =>
+                              const SizedBox(height: AppSpacing.sm),
+                          itemBuilder: (context, index) {
+                            final item = followUps[index];
+                            return _FollowUpCard(item: item);
+                          },
+                        ),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

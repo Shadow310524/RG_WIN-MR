@@ -13,7 +13,9 @@ import 'package:rgwin_crm/core/widgets/status_chip.dart';
 import 'package:rgwin_crm/features/auth/presentation/auth_controller.dart';
 import 'package:rgwin_crm/features/doctors/presentation/doctor_controller.dart';
 import 'package:rgwin_crm/features/followups/presentation/follow_up_controller.dart';
+import 'package:rgwin_crm/features/sales/domain/models/purchase_model.dart';
 import 'package:rgwin_crm/features/sales/presentation/purchase_controller.dart';
+import 'package:rgwin_crm/features/visits/domain/models/visit_model.dart';
 import 'package:rgwin_crm/features/visits/presentation/visit_controller.dart';
 
 class DashboardShellScreen extends ConsumerStatefulWidget {
@@ -24,14 +26,81 @@ class DashboardShellScreen extends ConsumerStatefulWidget {
       _DashboardShellScreenState();
 }
 
-class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen> {
+class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen>
+    with SingleTickerProviderStateMixin {
   String _selectedPeriod = "Today"; // "Today", "This Week", "This Month"
+  late final AnimationController _entranceController;
+  late final Animation<double> _fadeAnimation;
+  late final Animation<Offset> _slideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _entranceController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 280),
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _entranceController,
+      curve: Curves.easeOut,
+    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.02), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _entranceController,
+            curve: Curves.easeOutCubic,
+          ),
+        );
+    _entranceController.forward();
+  }
+
+  @override
+  void dispose() {
+    _entranceController.dispose();
+    super.dispose();
+  }
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
     if (hour < 12) return "Good morning";
     if (hour < 17) return "Good afternoon";
     return "Good evening";
+  }
+
+  DateTime get _now => DateTime.now();
+
+  List<VisitModel> _filterVisitsForPeriod(List<VisitModel> visits) {
+    if (_selectedPeriod == "Today") {
+      return visits.where((v) {
+        final d = v.visitDatetime;
+        return d.year == _now.year &&
+            d.month == _now.month &&
+            d.day == _now.day;
+      }).toList();
+    } else if (_selectedPeriod == "This Week") {
+      final weekAgo = _now.subtract(const Duration(days: 7));
+      return visits.where((v) => v.visitDatetime.isAfter(weekAgo)).toList();
+    } else {
+      final monthAgo = _now.subtract(const Duration(days: 30));
+      return visits.where((v) => v.visitDatetime.isAfter(monthAgo)).toList();
+    }
+  }
+
+  List<PurchaseModel> _filterPurchasesForPeriod(List<PurchaseModel> purchases) {
+    if (_selectedPeriod == "Today") {
+      return purchases.where((p) {
+        final d = p.purchaseDate;
+        return d.year == _now.year &&
+            d.month == _now.month &&
+            d.day == _now.day;
+      }).toList();
+    } else if (_selectedPeriod == "This Week") {
+      final weekAgo = _now.subtract(const Duration(days: 7));
+      return purchases.where((p) => p.purchaseDate.isAfter(weekAgo)).toList();
+    } else {
+      final monthAgo = _now.subtract(const Duration(days: 30));
+      return purchases.where((p) => p.purchaseDate.isAfter(monthAgo)).toList();
+    }
   }
 
   @override
@@ -42,8 +111,16 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen> {
     final doctorState = ref.watch(doctorControllerProvider);
     final followUpState = ref.watch(followUpControllerProvider);
 
-    final userName =
-        authState.user?.fullName.split(' ').first ?? "Representative";
+    final fullName = authState.user?.fullName;
+    final periodVisits = _filterVisitsForPeriod(visitState.visits);
+    final periodPurchases = _filterPurchasesForPeriod(purchaseState.purchases);
+    final periodPurchaseAmount = periodPurchases.fold(
+      0.0,
+      (sum, p) => sum + p.purchaseAmount,
+    );
+    final pendingFollowUps = followUpState.followUps
+        .where((f) => !f.isCompleted)
+        .toList();
     final todayVisits = visitState.todayVisits;
 
     return RefreshIndicator(
@@ -57,49 +134,69 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen> {
           ref.read(followUpControllerProvider.notifier).loadFollowUps(),
         ]);
       },
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 1. Field Sales Executive Header
-            _buildExecutiveHeader(userName, authState.user?.role),
-            const SizedBox(height: AppSpacing.md),
+      child: FadeTransition(
+        opacity: _fadeAnimation,
+        child: SlideTransition(
+          position: _slideAnimation,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 1. Field Sales Executive Header
+                _buildExecutiveHeader(fullName, authState.user?.role),
+                const SizedBox(height: AppSpacing.md),
 
-            // 2. Period Selector (Today | This Week | This Month)
-            _buildPeriodSelector(),
-            const SizedBox(height: AppSpacing.lg),
+                // 2. Period Selector (Today | This Week | This Month)
+                _buildPeriodSelector(),
+                const SizedBox(height: AppSpacing.lg),
 
-            // 3. 4-KPI Grid (Today's Visits, Purchase Value, Revenue, Profit/Loss)
-            _buildKpiGrid(todayVisits.length, purchaseState),
-            const SizedBox(height: AppSpacing.xl),
+                // 3. 4-KPI Overview Grid (Visits, Purchases, Follow-ups, Doctors)
+                _buildKpiGrid(
+                  visitsCount: periodVisits.length,
+                  purchaseAmount: periodPurchaseAmount,
+                  pendingFollowUpsCount: pendingFollowUps.length,
+                  totalDoctorsCount: doctorState.doctors.length,
+                ),
+                const SizedBox(height: AppSpacing.xl),
 
-            // 4. One-Hand Quick Actions (Touch targets >= 48dp)
-            _buildQuickActions(),
-            const SizedBox(height: AppSpacing.xl),
+                // 4. One-Hand Quick Actions (Touch targets >= 48dp)
+                _buildQuickActions(),
+                const SizedBox(height: AppSpacing.xl),
 
-            // 5. Today's Field Activity (Visits Timeline)
-            _buildTodayActivity(todayVisits),
-            const SizedBox(height: AppSpacing.xl),
+                // 5. Today's Field Activity (Visits Timeline)
+                _buildTodayActivity(todayVisits),
+                const SizedBox(height: AppSpacing.xl),
 
-            // 6. Upcoming Follow-ups (Phase 4 Workflow)
-            _buildUpcomingFollowUps(followUpState),
-            const SizedBox(height: AppSpacing.xl),
+                // 6. Upcoming Follow-ups (Phase 4 Workflow)
+                _buildUpcomingFollowUps(followUpState),
+                const SizedBox(height: AppSpacing.xl),
 
-            // 7. Top Purchasing Doctors
-            _buildTopPurchasingDoctors(doctorState, purchaseState),
-            const SizedBox(height: AppSpacing.xl),
+                // 7. Top Purchasing Doctors
+                _buildTopPurchasingDoctors(doctorState, purchaseState),
+                const SizedBox(height: AppSpacing.xl),
 
-            // 8. Commercial Health & PTS Snapshot
-            _buildCommercialSnapshot(purchaseState),
-          ],
+                // 8. Commercial Health & PTS Snapshot
+                _buildCommercialSnapshot(purchaseState),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildExecutiveHeader(String userName, String? role) {
+  Widget _buildExecutiveHeader(String? fullName, String? role) {
+    final hasName = fullName != null && fullName.trim().isNotEmpty;
+    final firstName = hasName ? fullName.trim().split(' ').first : null;
+    final greetingTitle = hasName
+        ? "${_getGreeting()}, $firstName 👋"
+        : "${_getGreeting()} 👋";
+    final greetingSubtitle = hasName
+        ? "Field Sales Overview"
+        : "Here's your field summary";
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -151,7 +248,7 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          "${_getGreeting()}, $userName 👋",
+          greetingTitle,
           style: const TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.w800,
@@ -160,9 +257,9 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen> {
           ),
         ),
         const SizedBox(height: 2),
-        const Text(
-          "Field Sales Overview",
-          style: TextStyle(
+        Text(
+          greetingSubtitle,
+          style: const TextStyle(
             fontSize: 13,
             color: AppColors.textSecondary,
             fontWeight: FontWeight.w500,
@@ -222,69 +319,81 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen> {
     );
   }
 
-  Widget _buildKpiGrid(int todayVisitsCount, PurchaseState purchaseState) {
+  Widget _buildKpiGrid({
+    required int visitsCount,
+    required double purchaseAmount,
+    required int pendingFollowUpsCount,
+    required int totalDoctorsCount,
+  }) {
     final currencyFormatter = NumberFormat.currency(
       locale: 'en_IN',
       symbol: '₹',
     );
 
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: MetricCard(
-                title: "Today's Visits",
-                value: "$todayVisitsCount",
-                icon: Icons.calendar_today_rounded,
-                accentColor: AppColors.primary,
-                subtitle: "$todayVisitsCount scheduled",
-                onTap: () => context.go('/visits'),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: MetricCard(
-                title: "Purchase Value",
-                value: currencyFormatter.format(
-                  purchaseState.totalPurchaseAmount,
+    final periodLabel = _selectedPeriod == "Today"
+        ? "Today's"
+        : (_selectedPeriod == "This Week" ? "Weekly" : "Monthly");
+
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 220),
+      transitionBuilder: (child, anim) =>
+          FadeTransition(opacity: anim, child: child),
+      child: Column(
+        key: ValueKey(_selectedPeriod),
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: MetricCard(
+                  title: "$periodLabel Visits",
+                  value: "$visitsCount",
+                  icon: Icons.calendar_today_rounded,
+                  accentColor: AppColors.primary,
+                  subtitle: "Logged visits",
+                  onTap: () => context.push('/visits'),
                 ),
-                icon: Icons.shopping_bag_outlined,
-                accentColor: AppColors.secondary,
-                subtitle: "Booked overall",
-                onTap: () => context.go('/sales'),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.md),
-        Row(
-          children: [
-            Expanded(
-              child: MetricCard(
-                title: "Revenue",
-                value: currencyFormatter.format(purchaseState.totalRevenue),
-                icon: Icons.account_balance_wallet_outlined,
-                accentColor: AppColors.success,
-                subtitle: "Gross realized",
-                onTap: () => context.go('/sales'),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: MetricCard(
+                  title: "$periodLabel Purchases",
+                  value: currencyFormatter.format(purchaseAmount),
+                  icon: Icons.shopping_bag_outlined,
+                  accentColor: AppColors.secondary,
+                  subtitle: "Booked overall",
+                  onTap: () => context.push('/sales'),
+                ),
               ),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: MetricCard(
-                title: "Profit / Loss",
-                value: "Insufficient data",
-                icon: Icons.trending_up_rounded,
-                accentColor: AppColors.warning,
-                isUnavailable: true,
-                subtitle: "Awaiting PTS & cost",
-                onTap: () => context.go('/sales'),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            children: [
+              Expanded(
+                child: MetricCard(
+                  title: "Follow-ups",
+                  value: "$pendingFollowUpsCount",
+                  icon: Icons.event_note_outlined,
+                  accentColor: AppColors.warning,
+                  subtitle: "Pending tasks",
+                  onTap: () => context.push('/followups'),
+                ),
               ),
-            ),
-          ],
-        ),
-      ],
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: MetricCard(
+                  title: "Doctors",
+                  value: "$totalDoctorsCount",
+                  icon: Icons.people_outline_rounded,
+                  accentColor: AppColors.info,
+                  subtitle: "Territory directory",
+                  onTap: () => context.push('/doctors'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -311,7 +420,7 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen> {
                   icon: Icons.add_location_alt_outlined,
                   color: AppColors.primaryDark,
                   backgroundColor: AppColors.primaryLight,
-                  onTap: () => context.go('/visits/add'),
+                  onTap: () => context.push('/visits/add'),
                 ),
               ),
               Expanded(
@@ -320,7 +429,7 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen> {
                   icon: Icons.person_add_alt_1_outlined,
                   color: AppColors.secondary,
                   backgroundColor: AppColors.secondaryLight,
-                  onTap: () => context.go('/doctors/add'),
+                  onTap: () => context.push('/doctors/add'),
                 ),
               ),
               Expanded(
@@ -329,7 +438,7 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen> {
                   icon: Icons.receipt_long_outlined,
                   color: AppColors.success,
                   backgroundColor: AppColors.successLight,
-                  onTap: () => context.go('/sales/record'),
+                  onTap: () => context.push('/sales/record'),
                 ),
               ),
               Expanded(
@@ -338,7 +447,7 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen> {
                   icon: Icons.account_balance_wallet_outlined,
                   color: AppColors.warning,
                   backgroundColor: AppColors.warningLight,
-                  onTap: () => context.go('/expenses/add'),
+                  onTap: () => context.push('/expenses/add'),
                 ),
               ),
             ],
@@ -356,7 +465,7 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen> {
           title: "Today's Activity",
           subtitle: "${todayVisits.length} appointments on schedule",
           actionLabel: "View all",
-          onAction: () => context.go('/visits'),
+          onAction: () => context.push('/visits'),
         ),
         const SizedBox(height: AppSpacing.sm),
         if (todayVisits.isEmpty)
@@ -397,7 +506,7 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen> {
                   ),
                   const SizedBox(height: AppSpacing.md),
                   SpringButton(
-                    onTap: () => context.go('/visits/add'),
+                    onTap: () => context.push('/visits/add'),
                     scaleDown: 0.95,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
@@ -435,7 +544,7 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen> {
 
               return AppCard(
                 padding: const EdgeInsets.all(AppSpacing.md),
-                onTap: () => context.go('/visits'),
+                onTap: () => context.push('/visits'),
                 child: Row(
                   children: [
                     Container(
@@ -501,7 +610,7 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen> {
           title: "Upcoming Follow-ups",
           subtitle: "${upcoming.length} commitments scheduled",
           actionLabel: "View all",
-          onAction: () => context.go('/followups'),
+          onAction: () => context.push('/followups'),
         ),
         const SizedBox(height: AppSpacing.sm),
         if (upcoming.isEmpty)
@@ -558,7 +667,13 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen> {
 
               return AppCard(
                 padding: const EdgeInsets.all(AppSpacing.md),
-                onTap: () => context.go('/followups'),
+                onTap: () {
+                  if (fu.doctorId.isNotEmpty) {
+                    context.push('/doctors/${fu.doctorId}');
+                  } else {
+                    context.push('/followups');
+                  }
+                },
                 child: Row(
                   children: [
                     Container(
@@ -627,7 +742,29 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen> {
       locale: 'en_IN',
       symbol: '₹',
     );
-    final doctors = doctorState.doctors;
+
+    // Group real purchases by doctorId
+    final Map<String, double> purchasesByDoctor = {};
+    for (final p in purchaseState.purchases) {
+      if (p.doctorId != null && p.doctorId!.isNotEmpty) {
+        purchasesByDoctor[p.doctorId!] =
+            (purchasesByDoctor[p.doctorId!] ?? 0.0) + p.purchaseAmount;
+      }
+    }
+
+    // Filter and sort doctors by actual purchase volume descending
+    final purchasingDoctors =
+        doctorState.doctors
+            .where(
+              (d) =>
+                  purchasesByDoctor.containsKey(d.id) &&
+                  purchasesByDoctor[d.id]! > 0,
+            )
+            .toList()
+          ..sort(
+            (a, b) =>
+                purchasesByDoctor[b.id]!.compareTo(purchasesByDoctor[a.id]!),
+          );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -636,15 +773,15 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen> {
           title: "Top Purchasing Doctors",
           subtitle: "Key medical business relationships",
           actionLabel: "Directory",
-          onAction: () => context.go('/doctors'),
+          onAction: () => context.push('/doctors'),
         ),
         const SizedBox(height: AppSpacing.sm),
-        if (doctors.isEmpty)
+        if (purchasingDoctors.isEmpty)
           AppCard(
             padding: const EdgeInsets.all(AppSpacing.lg),
             child: const Center(
               child: Text(
-                "No doctors enrolled yet.",
+                "No purchase data recorded yet.",
                 style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
               ),
             ),
@@ -653,19 +790,18 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen> {
           ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: doctors.length > 2 ? 2 : doctors.length,
+            itemCount: purchasingDoctors.length > 3
+                ? 3
+                : purchasingDoctors.length,
             separatorBuilder: (context, index) =>
                 const SizedBox(height: AppSpacing.sm),
             itemBuilder: (context, index) {
-              final doc = doctors[index];
-              final samplePurchases = [50000.0, 32000.0];
-              final amount = index < samplePurchases.length
-                  ? samplePurchases[index]
-                  : 15000.0;
+              final doc = purchasingDoctors[index];
+              final amount = purchasesByDoctor[doc.id] ?? 0.0;
 
               return AppCard(
                 padding: const EdgeInsets.all(AppSpacing.md),
-                onTap: () => context.go('/doctors/${doc.id}'),
+                onTap: () => context.push('/doctors/${doc.id}'),
                 child: Row(
                   children: [
                     Container(
@@ -757,7 +893,8 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen> {
               const Divider(height: AppSpacing.lg, color: AppColors.border),
               _buildSnapshotRow(
                 label: "Gross Realized Revenue",
-                value: currencyFormatter.format(purchaseState.totalRevenue),
+                value: "Revenue unavailable",
+                isMuted: true,
               ),
               const Divider(height: AppSpacing.lg, color: AppColors.border),
               _buildSnapshotRow(

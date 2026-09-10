@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rgwin_crm/core/theme/app_colors.dart';
 import 'package:rgwin_crm/core/theme/app_spacing.dart';
@@ -19,9 +20,7 @@ class NavigationItem {
   });
 }
 
-/// Mobile-First Responsive Scaffold designed for physical Android device usage
-/// with clean light lavender styling and 5-tab bottom navigation.
-class ResponsiveScaffold extends ConsumerWidget {
+class ResponsiveScaffold extends ConsumerStatefulWidget {
   final Widget body;
   final int currentIndex;
   final ValueChanged<int> onNavigationIndexChanged;
@@ -44,7 +43,14 @@ class ResponsiveScaffold extends ConsumerWidget {
   static const double kMaxMobileWidth = 480.0;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ResponsiveScaffold> createState() => _ResponsiveScaffoldState();
+}
+
+class _ResponsiveScaffoldState extends ConsumerState<ResponsiveScaffold> {
+  DateTime? _lastBackPressTime;
+
+  @override
+  Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
 
     final defaultActions = <Widget>[
@@ -95,58 +101,99 @@ class ResponsiveScaffold extends ConsumerWidget {
       ],
     ];
 
-    final effectiveActions = actions ?? defaultActions;
+    final effectiveActions = widget.actions ?? defaultActions;
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isWideScreen = constraints.maxWidth > kMaxMobileWidth;
+        final isWideScreen =
+            constraints.maxWidth > ResponsiveScaffold.kMaxMobileWidth;
 
-        final scaffoldContent = Scaffold(
-          backgroundColor: AppColors.background,
-          appBar: AppBar(
-            backgroundColor: AppColors.background,
-            elevation: 0,
-            title: Row(
-              children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    gradient: AppColors.primaryGradient,
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
+        final scaffoldContent = PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, result) {
+            if (didPop) return;
+
+            final now = DateTime.now();
+            if (_lastBackPressTime != null &&
+                now.difference(_lastBackPressTime!) <
+                    const Duration(seconds: 2)) {
+              SystemNavigator.pop();
+            } else {
+              _lastBackPressTime = now;
+              ScaffoldMessenger.of(context).removeCurrentSnackBar();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text(
+                    "Press back again to exit",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
                   ),
-                  child: const Center(
-                    child: Text(
-                      "RG",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 13,
-                        letterSpacing: 0.5,
+                  backgroundColor: AppColors.textPrimary.withOpacity(0.88),
+                  duration: const Duration(seconds: 2),
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                  margin: const EdgeInsets.only(
+                    bottom: 74,
+                    left: 70,
+                    right: 70,
+                  ),
+                ),
+              );
+            }
+          },
+          child: Scaffold(
+            backgroundColor: AppColors.background,
+            appBar: AppBar(
+              backgroundColor: AppColors.background,
+              elevation: 0,
+              title: Row(
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      gradient: AppColors.primaryGradient,
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        "RG",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 13,
+                          letterSpacing: 0.5,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Text(
-                  title ?? items[currentIndex].label,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                    letterSpacing: -0.2,
+                  const SizedBox(width: AppSpacing.sm),
+                  Text(
+                    widget.title ?? widget.items[widget.currentIndex].label,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                      letterSpacing: -0.2,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
+              actions: effectiveActions,
             ),
-            actions: effectiveActions,
-          ),
-          body: body,
-          floatingActionButton: floatingActionButton,
-          bottomNavigationBar: _MobileBottomNav(
-            currentIndex: currentIndex,
-            items: items,
-            onSelected: onNavigationIndexChanged,
+            body: widget.body,
+            floatingActionButton: widget.floatingActionButton,
+            bottomNavigationBar: _MobileBottomNav(
+              currentIndex: widget.currentIndex,
+              items: widget.items,
+              onSelected: widget.onNavigationIndexChanged,
+            ),
           ),
         );
 
@@ -156,7 +203,9 @@ class ResponsiveScaffold extends ConsumerWidget {
             backgroundColor: const Color(0xFFF0EFF6),
             body: Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: kMaxMobileWidth),
+                constraints: const BoxConstraints(
+                  maxWidth: ResponsiveScaffold.kMaxMobileWidth,
+                ),
                 child: Container(
                   decoration: const BoxDecoration(
                     boxShadow: [
