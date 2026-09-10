@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rgwin_crm/core/network/dio_client.dart';
 import 'package:rgwin_crm/core/storage/secure_storage.dart';
+import 'package:rgwin_crm/core/utils/numeric_utils.dart';
 import 'package:rgwin_crm/features/sales/domain/models/purchase_model.dart';
 import 'package:rgwin_crm/features/sales/domain/pts_calculation_service.dart';
 
@@ -34,24 +35,25 @@ class PurchaseRepository {
           : (data is Map && data['items'] is List ? data['items'] as List : []);
 
       if (rawItems.isNotEmpty || data is Map || data is List) {
-        final serverPurchases = rawItems.map((json) {
-          final amt = (json['total_amount'] as num?)?.toDouble() ?? 0.0;
+        final serverPurchases = rawItems.map((raw) {
+          final json = asStringKeyedMap(raw);
+          final amt = parseDouble(json['total_amount']);
           return PurchaseModel(
-            id: json['id'] as String,
-            doctorId: json['doctor_id'] as String?,
+            id: json['id']?.toString() ?? '',
+            doctorId: json['doctor_id']?.toString(),
             doctorName: json['doctor_name'] as String?,
             clinicName: json['clinic_name'] as String?,
             purchaseDate:
-                DateTime.tryParse(json['sale_date'] as String? ?? '') ??
+                DateTime.tryParse(json['sale_date']?.toString() ?? '') ??
                 DateTime.now(),
             purchaseAmount: amt,
-            gstAmount: 0.0,
+            gstAmount: parseDouble(json['gst_amount']),
             totalAmount: amt,
-            ptsRate: null,
-            ptsValue: null,
+            ptsRate: parseDoubleOrNull(json['pts_rate']),
+            ptsValue: parseDoubleOrNull(json['pts_value']),
             status: json['status'] as String? ?? 'CONFIRMED',
             syncState: 'synced',
-            createdAt: DateTime.now(),
+            createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ?? DateTime.now(),
           );
         }).toList();
 

@@ -7,7 +7,7 @@ from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 
 from app.core.exceptions import NotFoundException, ForbiddenException
-from app.models.area import Area
+from app.models.area import Area, AreaStatusEnum
 from app.models.doctor import Doctor, DoctorStatusEnum
 from app.models.sale import Sale, SaleStatusEnum
 from app.models.visit import Visit
@@ -57,9 +57,9 @@ def _get_standard_provenance() -> Dict[str, FigureProvenance]:
 
 class FinancialAnalyticsService:
     """
-    Authoritative Financial Intelligence Engine for RG WIN.
-    Aggregates: Doctor -> Area -> Overall Business.
-    Enforces Decimal arithmetic, server-side aggregation, and strict data provenance.
+    Authoritative financial intelligence service.
+    Aggregates doctor-level commercial performance into area and overall rollups.
+    Enforces honest placeholders (never fake ₹0) and strict data provenance.
     """
 
     def __init__(self, db: AsyncSession):
@@ -67,7 +67,12 @@ class FinancialAnalyticsService:
         self.doctor_repo = DoctorRepository(db)
         self.mr_assign_repo = MRAssignmentRepository(db)
 
-    async def get_doctor_summary(self, doctor_id: uuid.UUID, current_user: User) -> DoctorCommercialSummary:
+    async def get_doctor_summary(
+        self,
+        doctor_id: uuid.UUID,
+        current_user: User,
+        start_date: Optional[date] = None,
+    ) -> DoctorCommercialSummary:
         doctor = await self.doctor_repo.get_by_id(doctor_id)
         if not doctor:
             raise NotFoundException(f"Doctor '{doctor_id}' not found.", code="DOCTOR_NOT_FOUND")
@@ -79,28 +84,31 @@ class FinancialAnalyticsService:
                 raise ForbiddenException("Access denied. Doctor is outside your assigned territory.")
 
         # 1. Total Purchases / Business Value
-        sales_val_res = await self.db.execute(
-            select(func.coalesce(func.sum(Sale.total_amount), Decimal("0.00")))
-            .where(Sale.doctor_id == doctor_id)
-        )
-        business_value = sales_val_res.scalar() or Decimal("0.00")
-
-        sales_count_res = await self.db.execute(
-            select(func.count()).select_from(Sale).where(Sale.doctor_id == doctor_id)
-        )
-        purchase_count = sales_count_res.scalar() or 0
+        sales_val_stmt = select(
+            func.coalesce(func.sum(Sale.total_amount), Decimal("0.00")),
+            func.count(Sale.id),
+        ).where(Sale.doctor_id == doctor_id)
+        if start_date:
+            sales_val_stmt = sales_val_stmt.where(Sale.sale_date >= start_date)
+        sales_res = await self.db.execute(sales_val_stmt)
+        business_value, purchase_count = sales_res.one()
+        business_value = business_value or Decimal("0.00")
+        purchase_count = purchase_count or 0
 
         # 2. Total Promotional Investment
-        invest_val_res = await self.db.execute(
-            select(func.coalesce(func.sum(DoctorPromotionalInvestment.amount), Decimal("0.00")))
-            .where(DoctorPromotionalInvestment.doctor_id == doctor_id)
-        )
+        invest_val_stmt = select(
+            func.coalesce(func.sum(DoctorPromotionalInvestment.amount), Decimal("0.00"))
+        ).where(DoctorPromotionalInvestment.doctor_id == doctor_id)
+        if start_date:
+            invest_val_stmt = invest_val_stmt.where(DoctorPromotionalInvestment.investment_date >= start_date)
+        invest_val_res = await self.db.execute(invest_val_stmt)
         promotional_investment = invest_val_res.scalar() or Decimal("0.00")
 
         # 3. Visits Count
-        visits_count_res = await self.db.execute(
-            select(func.count()).select_from(Visit).where(Visit.doctor_id == doctor_id)
-        )
+        visits_count_stmt = select(func.count()).select_from(Visit).where(Visit.doctor_id == doctor_id)
+        if start_date:
+            visits_count_stmt = visits_count_stmt.where(func.date(Visit.visit_datetime) >= start_date)
+        visits_count_res = await self.db.execute(visits_count_stmt)
         visit_count = visits_count_res.scalar() or 0
 
         # 4. Recent Promotional Investments
@@ -152,7 +160,12 @@ class FinancialAnalyticsService:
             provenance=_get_standard_provenance(),
         )
 
-    async def get_area_summary(self, area_id: uuid.UUID, current_user: User) -> AreaCommercialSummary:
+    async def get_area_summary(
+        self,
+        area_id: uuid.UUID,
+        current_user: User,
+        start_date: Optional[date] = None,
+    ) -> AreaCommercialSummary:
         area_res = await self.db.execute(select(Area).where(Area.id == area_id))
         area = area_res.scalars().first()
         if not area:
@@ -178,27 +191,31 @@ class FinancialAnalyticsService:
 
         for doc in doctors:
             # Sales for doctor
-            sales_res = await self.db.execute(
-                select(
-                    func.coalesce(func.sum(Sale.total_amount), Decimal("0.00")),
-                    func.count(Sale.id)
-                ).where(Sale.doctor_id == doc.id)
-            )
+            sales_stmt = select(
+                func.coalesce(func.sum(Sale.total_amount), Decimal("0.00")),
+                func.count(Sale.id)
+            ).where(Sale.doctor_id == doc.id)
+            if start_date:
+                sales_stmt = sales_stmt.where(Sale.sale_date >= start_date)
+            sales_res = await self.db.execute(sales_stmt)
             bv, p_count = sales_res.one()
             bv = bv or Decimal("0.00")
             p_count = p_count or 0
 
             # Promotional investment for doctor
-            invest_res = await self.db.execute(
-                select(func.coalesce(func.sum(DoctorPromotionalInvestment.amount), Decimal("0.00")))
-                .where(DoctorPromotionalInvestment.doctor_id == doc.id)
-            )
+            invest_stmt = select(
+                func.coalesce(func.sum(DoctorPromotionalInvestment.amount), Decimal("0.00"))
+            ).where(DoctorPromotionalInvestment.doctor_id == doc.id)
+            if start_date:
+                invest_stmt = invest_stmt.where(DoctorPromotionalInvestment.investment_date >= start_date)
+            invest_res = await self.db.execute(invest_stmt)
             pi = invest_res.scalar() or Decimal("0.00")
 
             # Visits count
-            visits_res = await self.db.execute(
-                select(func.count()).select_from(Visit).where(Visit.doctor_id == doc.id)
-            )
+            visits_stmt = select(func.count()).select_from(Visit).where(Visit.doctor_id == doc.id)
+            if start_date:
+                visits_stmt = visits_stmt.where(func.date(Visit.visit_datetime) >= start_date)
+            visits_res = await self.db.execute(visits_stmt)
             v_count = visits_res.scalar() or 0
 
             area_business_value += bv
@@ -235,11 +252,11 @@ class FinancialAnalyticsService:
         )
 
     async def get_overall_summary(self, current_user: User, period: str = "this_month") -> OverallCommercialSummary:
-        # Determine assigned areas for MR
+        # Determine assigned areas for MR vs Admin
         if current_user.role == RoleEnum.MR:
             assigned_area_ids = await self.mr_assign_repo.get_assigned_area_ids_for_mr(current_user.id)
         else:
-            all_areas_res = await self.db.execute(select(Area.id).where(Area.is_active == True))
+            all_areas_res = await self.db.execute(select(Area.id).where(Area.status == AreaStatusEnum.ACTIVE))
             assigned_area_ids = [row[0] for row in all_areas_res.all()]
 
         # Filter by period date window
@@ -267,7 +284,7 @@ class FinancialAnalyticsService:
         standard_provenance = _get_standard_provenance()
 
         for area_id in assigned_area_ids:
-            area_summary = await self.get_area_summary(area_id, current_user)
+            area_summary = await self.get_area_summary(area_id, current_user, start_date=start_date)
             area_summaries.append(area_summary)
             total_business_value += area_summary.business_value
             total_promotional_investment += area_summary.promotional_investment

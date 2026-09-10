@@ -1,3 +1,5 @@
+import 'package:rgwin_crm/core/utils/numeric_utils.dart';
+
 class PromotionalInvestmentModel {
   final String id;
   final String doctorId;
@@ -43,14 +45,14 @@ class PromotionalInvestmentModel {
 
   factory PromotionalInvestmentModel.fromJson(Map<String, dynamic> json) {
     return PromotionalInvestmentModel(
-      id: json['id'] as String,
-      doctorId: json['doctor_id'] as String,
+      id: json['id']?.toString() ?? '',
+      doctorId: json['doctor_id']?.toString() ?? '',
       doctorName: json['doctor_name'] as String?,
-      visitId: json['visit_id'] as String?,
-      amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
+      visitId: json['visit_id']?.toString(),
+      amount: parseDouble(json['amount']),
       investmentType: json['investment_type'] as String? ?? 'SAMPLE',
       investmentDate:
-          DateTime.tryParse(json['investment_date'] as String? ?? '') ??
+          DateTime.tryParse(json['investment_date']?.toString() ?? '') ??
           DateTime.now(),
       notes: json['notes'] as String?,
       syncState: json['sync_state'] as String? ?? 'synced',
@@ -58,7 +60,7 @@ class PromotionalInvestmentModel {
           json['provenance_source'] as String? ??
           'EXPLICIT_PROMOTIONAL_INVESTMENT',
       createdAt:
-          DateTime.tryParse(json['created_at'] as String? ?? '') ??
+          DateTime.tryParse(json['created_at']?.toString() ?? '') ??
           DateTime.now(),
     );
   }

@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rgwin_crm/core/network/dio_client.dart';
 import 'package:rgwin_crm/core/storage/secure_storage.dart';
+import 'package:rgwin_crm/core/utils/numeric_utils.dart';
 import 'package:rgwin_crm/features/promotions/domain/models/promotional_investment_model.dart';
 
 final promotionalInvestmentRepositoryProvider =
@@ -48,10 +49,8 @@ class PromotionalInvestmentRepository {
           ? data
           : (data is Map && data['items'] is List ? data['items'] as List : []);
 
-      final serverInvestments = rawItems.map((json) {
-        return PromotionalInvestmentModel.fromJson(
-          json as Map<String, dynamic>,
-        );
+      final serverInvestments = rawItems.map((raw) {
+        return PromotionalInvestmentModel.fromJson(asStringKeyedMap(raw));
       }).toList();
 
       // Merge with offline pending items not yet on server

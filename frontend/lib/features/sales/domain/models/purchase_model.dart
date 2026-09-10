@@ -1,3 +1,5 @@
+import 'package:rgwin_crm/core/utils/numeric_utils.dart';
+
 class PurchaseModel {
   final String id;
   final String? doctorId;
@@ -50,20 +52,23 @@ class PurchaseModel {
 
   factory PurchaseModel.fromJson(Map<String, dynamic> json) {
     return PurchaseModel(
-      id: json['id'] as String,
-      doctorId: json['doctor_id'] as String?,
+      id: json['id']?.toString() ?? '',
+      doctorId: json['doctor_id']?.toString(),
       doctorName: json['doctor_name'] as String?,
       clinicName: json['clinic_name'] as String?,
-      purchaseDate: DateTime.parse(json['purchase_date'] as String),
-      purchaseAmount: (json['purchase_amount'] as num).toDouble(),
-      gstAmount: (json['gst_amount'] as num).toDouble(),
-      totalAmount: (json['total_amount'] as num).toDouble(),
-      ptsRate: (json['pts_rate'] as num?)?.toDouble(),
-      ptsValue: (json['pts_value'] as num?)?.toDouble(),
+      purchaseDate: DateTime.tryParse(json['purchase_date']?.toString() ?? '') ??
+          DateTime.tryParse(json['sale_date']?.toString() ?? '') ??
+          DateTime.now(),
+      purchaseAmount: parseDouble(json['purchase_amount'] ?? json['total_amount']),
+      gstAmount: parseDouble(json['gst_amount']),
+      totalAmount: parseDouble(json['total_amount']),
+      ptsRate: parseDoubleOrNull(json['pts_rate']),
+      ptsValue: parseDoubleOrNull(json['pts_value']),
       notes: json['notes'] as String?,
       status: json['status'] as String? ?? "CONFIRMED",
       syncState: json['sync_state'] as String? ?? "synced",
-      createdAt: DateTime.parse(json['created_at'] as String),
+      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ??
+          DateTime.now(),
     );
   }
 }

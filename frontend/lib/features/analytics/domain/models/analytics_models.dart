@@ -1,3 +1,4 @@
+import 'package:rgwin_crm/core/utils/numeric_utils.dart';
 import 'package:rgwin_crm/features/promotions/domain/models/promotional_investment_model.dart';
 
 class FigureProvenanceModel {
@@ -49,23 +50,24 @@ class DoctorRankItemModel {
     final provMap = <String, FigureProvenanceModel>{};
     if (json['provenance'] is Map) {
       (json['provenance'] as Map).forEach((k, v) {
-        if (v is Map<String, dynamic>) {
-          provMap[k.toString()] = FigureProvenanceModel.fromJson(v);
+        if (v is Map) {
+          provMap[k.toString()] = FigureProvenanceModel.fromJson(
+            asStringKeyedMap(v),
+          );
         }
       });
     }
 
     return DoctorRankItemModel(
-      doctorId: json['doctor_id'] as String,
-      doctorName: json['doctor_name'] as String,
+      doctorId: json['doctor_id']?.toString() ?? '',
+      doctorName: json['doctor_name'] as String? ?? '',
       clinicName: json['clinic_name'] as String?,
       specialization: json['specialization'] as String? ?? '',
-      visitCount: json['visit_count'] as int? ?? 0,
-      purchaseCount: json['purchase_count'] as int? ?? 0,
-      businessValue: (json['business_value'] as num?)?.toDouble() ?? 0.0,
-      promotionalInvestment:
-          (json['promotional_investment'] as num?)?.toDouble() ?? 0.0,
-      commercialResult: (json['commercial_result'] as num?)?.toDouble(),
+      visitCount: parseInt(json['visit_count']),
+      purchaseCount: parseInt(json['purchase_count']),
+      businessValue: parseDouble(json['business_value']),
+      promotionalInvestment: parseDouble(json['promotional_investment']),
+      commercialResult: parseDoubleOrNull(json['commercial_result']),
       provenance: provMap,
     );
   }
@@ -96,27 +98,28 @@ class AreaCommercialSummaryModel {
 
   factory AreaCommercialSummaryModel.fromJson(Map<String, dynamic> json) {
     final docList = (json['doctors'] as List? ?? [])
-        .map((d) => DoctorRankItemModel.fromJson(d as Map<String, dynamic>))
+        .map((d) => DoctorRankItemModel.fromJson(asStringKeyedMap(d)))
         .toList();
 
     final provMap = <String, FigureProvenanceModel>{};
     if (json['provenance'] is Map) {
       (json['provenance'] as Map).forEach((k, v) {
-        if (v is Map<String, dynamic>) {
-          provMap[k.toString()] = FigureProvenanceModel.fromJson(v);
+        if (v is Map) {
+          provMap[k.toString()] = FigureProvenanceModel.fromJson(
+            asStringKeyedMap(v),
+          );
         }
       });
     }
 
     return AreaCommercialSummaryModel(
-      areaId: json['area_id'] as String,
-      areaName: json['area_name'] as String,
+      areaId: json['area_id']?.toString() ?? '',
+      areaName: json['area_name'] as String? ?? '',
       areaCode: json['area_code'] as String? ?? '',
-      doctorCount: json['doctor_count'] as int? ?? 0,
-      businessValue: (json['business_value'] as num?)?.toDouble() ?? 0.0,
-      promotionalInvestment:
-          (json['promotional_investment'] as num?)?.toDouble() ?? 0.0,
-      commercialResult: (json['commercial_result'] as num?)?.toDouble(),
+      doctorCount: parseInt(json['doctor_count']),
+      businessValue: parseDouble(json['business_value']),
+      promotionalInvestment: parseDouble(json['promotional_investment']),
+      commercialResult: parseDoubleOrNull(json['commercial_result']),
       doctors: docList,
       provenance: provMap,
     );
@@ -155,34 +158,34 @@ class OverallCommercialSummaryModel {
   factory OverallCommercialSummaryModel.fromJson(Map<String, dynamic> json) {
     final areaList = (json['areas'] as List? ?? [])
         .map(
-          (a) => AreaCommercialSummaryModel.fromJson(a as Map<String, dynamic>),
+          (a) => AreaCommercialSummaryModel.fromJson(asStringKeyedMap(a)),
         )
         .toList();
     final docList = (json['top_doctors'] as List? ?? [])
-        .map((d) => DoctorRankItemModel.fromJson(d as Map<String, dynamic>))
+        .map((d) => DoctorRankItemModel.fromJson(asStringKeyedMap(d)))
         .toList();
 
     final provMap = <String, FigureProvenanceModel>{};
     if (json['provenance'] is Map) {
       (json['provenance'] as Map).forEach((k, v) {
-        if (v is Map<String, dynamic>) {
-          provMap[k.toString()] = FigureProvenanceModel.fromJson(v);
+        if (v is Map) {
+          provMap[k.toString()] = FigureProvenanceModel.fromJson(
+            asStringKeyedMap(v),
+          );
         }
       });
     }
 
     return OverallCommercialSummaryModel(
       period: json['period'] as String? ?? 'this_month',
-      totalDoctors: json['total_doctors'] as int? ?? 0,
-      totalVisits: json['total_visits'] as int? ?? 0,
-      totalPurchases: json['total_purchases'] as int? ?? 0,
-      businessValue: (json['business_value'] as num?)?.toDouble() ?? 0.0,
-      promotionalInvestment:
-          (json['promotional_investment'] as num?)?.toDouble() ?? 0.0,
-      operatingExpenses:
-          (json['operating_expenses'] as num?)?.toDouble() ?? 0.0,
-      revenue: (json['revenue'] as num?)?.toDouble(),
-      profitLoss: (json['profit_loss'] as num?)?.toDouble(),
+      totalDoctors: parseInt(json['total_doctors']),
+      totalVisits: parseInt(json['total_visits']),
+      totalPurchases: parseInt(json['total_purchases']),
+      businessValue: parseDouble(json['business_value']),
+      promotionalInvestment: parseDouble(json['promotional_investment']),
+      operatingExpenses: parseDouble(json['operating_expenses']),
+      revenue: parseDoubleOrNull(json['revenue']),
+      profitLoss: parseDoubleOrNull(json['profit_loss']),
       areas: areaList,
       topDoctors: docList,
       provenance: provMap,
@@ -226,33 +229,34 @@ class DoctorCommercialSummaryModel {
   factory DoctorCommercialSummaryModel.fromJson(Map<String, dynamic> json) {
     final invList = (json['recent_investments'] as List? ?? [])
         .map(
-          (i) => PromotionalInvestmentModel.fromJson(i as Map<String, dynamic>),
+          (i) => PromotionalInvestmentModel.fromJson(asStringKeyedMap(i)),
         )
         .toList();
 
     final provMap = <String, FigureProvenanceModel>{};
     if (json['provenance'] is Map) {
       (json['provenance'] as Map).forEach((k, v) {
-        if (v is Map<String, dynamic>) {
-          provMap[k.toString()] = FigureProvenanceModel.fromJson(v);
+        if (v is Map) {
+          provMap[k.toString()] = FigureProvenanceModel.fromJson(
+            asStringKeyedMap(v),
+          );
         }
       });
     }
 
     return DoctorCommercialSummaryModel(
-      doctorId: json['doctor_id'] as String,
-      doctorName: json['doctor_name'] as String,
+      doctorId: json['doctor_id']?.toString() ?? '',
+      doctorName: json['doctor_name'] as String? ?? '',
       clinicName: json['clinic_name'] as String?,
       specialization: json['specialization'] as String? ?? '',
-      areaId: json['area_id'] as String,
+      areaId: json['area_id']?.toString() ?? '',
       areaName: json['area_name'] as String?,
-      visitCount: json['visit_count'] as int? ?? 0,
-      purchaseCount: json['purchase_count'] as int? ?? 0,
-      businessValue: (json['business_value'] as num?)?.toDouble() ?? 0.0,
-      promotionalInvestment:
-          (json['promotional_investment'] as num?)?.toDouble() ?? 0.0,
-      revenue: (json['revenue'] as num?)?.toDouble(),
-      commercialResult: (json['commercial_result'] as num?)?.toDouble(),
+      visitCount: parseInt(json['visit_count']),
+      purchaseCount: parseInt(json['purchase_count']),
+      businessValue: parseDouble(json['business_value']),
+      promotionalInvestment: parseDouble(json['promotional_investment']),
+      revenue: parseDoubleOrNull(json['revenue']),
+      commercialResult: parseDoubleOrNull(json['commercial_result']),
       recentInvestments: invList,
       provenance: provMap,
     );

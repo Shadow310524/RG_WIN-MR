@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rgwin_crm/core/network/dio_client.dart';
 import 'package:rgwin_crm/core/storage/secure_storage.dart';
+import 'package:rgwin_crm/core/utils/numeric_utils.dart';
 import 'package:rgwin_crm/features/analytics/domain/models/analytics_models.dart';
 
 final analyticsRepositoryProvider = Provider<AnalyticsRepository>((ref) {
@@ -30,9 +31,9 @@ class AnalyticsRepository {
         '/analytics/doctor/$doctorId',
         options: options,
       );
-      if (response.data is Map<String, dynamic>) {
+      if (response.data is Map) {
         return DoctorCommercialSummaryModel.fromJson(
-          response.data as Map<String, dynamic>,
+          asStringKeyedMap(response.data),
         );
       }
     } catch (_) {
@@ -48,9 +49,9 @@ class AnalyticsRepository {
         '/analytics/area/$areaId',
         options: options,
       );
-      if (response.data is Map<String, dynamic>) {
+      if (response.data is Map) {
         return AreaCommercialSummaryModel.fromJson(
-          response.data as Map<String, dynamic>,
+          asStringKeyedMap(response.data),
         );
       }
     } catch (_) {}
@@ -67,9 +68,9 @@ class AnalyticsRepository {
         queryParameters: {'period': period},
         options: options,
       );
-      if (response.data is Map<String, dynamic>) {
+      if (response.data is Map) {
         return OverallCommercialSummaryModel.fromJson(
-          response.data as Map<String, dynamic>,
+          asStringKeyedMap(response.data),
         );
       }
     } catch (_) {}

@@ -10,9 +10,11 @@ import 'package:rgwin_crm/core/widgets/quick_action.dart';
 import 'package:rgwin_crm/core/widgets/section_header.dart';
 import 'package:rgwin_crm/core/widgets/spring_button.dart';
 import 'package:rgwin_crm/core/widgets/status_chip.dart';
+import 'package:rgwin_crm/features/analytics/presentation/analytics_controller.dart';
 import 'package:rgwin_crm/features/auth/presentation/auth_controller.dart';
 import 'package:rgwin_crm/features/doctors/presentation/doctor_controller.dart';
 import 'package:rgwin_crm/features/followups/presentation/follow_up_controller.dart';
+import 'package:rgwin_crm/features/promotions/presentation/promotional_investment_controller.dart';
 import 'package:rgwin_crm/features/sales/domain/models/purchase_model.dart';
 import 'package:rgwin_crm/features/sales/presentation/purchase_controller.dart';
 import 'package:rgwin_crm/features/visits/domain/models/visit_model.dart';
@@ -57,6 +59,8 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen>
       ref.read(purchaseControllerProvider.notifier).loadPurchases();
       ref.read(doctorControllerProvider.notifier).loadInitialData();
       ref.read(followUpControllerProvider.notifier).loadFollowUps();
+      ref.read(promotionalInvestmentControllerProvider.notifier).loadInvestments();
+      ref.read(analyticsControllerProvider.notifier).loadAnalytics();
     });
   }
 
@@ -88,7 +92,11 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen>
       return visits.where((v) => v.visitDatetime.isAfter(weekAgo)).toList();
     } else {
       final monthAgo = _now.subtract(const Duration(days: 30));
-      return visits.where((v) => v.visitDatetime.isAfter(monthAgo)).toList();
+      return visits.where((v) {
+        final d = v.visitDatetime;
+        return (d.year == _now.year && d.month == _now.month) ||
+            d.isAfter(monthAgo);
+      }).toList();
     }
   }
 
@@ -105,7 +113,11 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen>
       return purchases.where((p) => p.purchaseDate.isAfter(weekAgo)).toList();
     } else {
       final monthAgo = _now.subtract(const Duration(days: 30));
-      return purchases.where((p) => p.purchaseDate.isAfter(monthAgo)).toList();
+      return purchases.where((p) {
+        final d = p.purchaseDate;
+        return (d.year == _now.year && d.month == _now.month) ||
+            d.isAfter(monthAgo);
+      }).toList();
     }
   }
 
@@ -138,6 +150,8 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen>
           ref.read(purchaseControllerProvider.notifier).loadPurchases(),
           ref.read(doctorControllerProvider.notifier).loadDoctors(),
           ref.read(followUpControllerProvider.notifier).loadFollowUps(),
+          ref.read(promotionalInvestmentControllerProvider.notifier).loadInvestments(),
+          ref.read(analyticsControllerProvider.notifier).loadAnalytics(),
         ]);
       },
       child: FadeTransition(
