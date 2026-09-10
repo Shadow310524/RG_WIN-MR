@@ -198,9 +198,8 @@ class _RecordVisitScreenState extends ConsumerState<RecordVisitScreen> {
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 AppCard(
-                  isGlass: true,
                   child: DropdownButtonFormField<String>(
-                    dropdownColor: AppColors.surfaceElevated,
+                    dropdownColor: AppColors.surface,
                     value: _selectedDoctorId,
                     decoration: const InputDecoration(
                       labelText: "Select Doctor",
@@ -275,10 +274,10 @@ class _RecordVisitScreenState extends ConsumerState<RecordVisitScreen> {
                 ),
                 const SizedBox(height: AppSpacing.lg),
 
-                // 3. Discussion & Samples
+                // 3. Discussion & What was given
                 const SectionHeader(
-                  title: "Discussion & Samples Given",
-                  subtitle: "Products detailed during this interaction",
+                  title: "Discussion & Activity",
+                  subtitle: "Topics detailed and samples distributed",
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 AppCard(
@@ -286,15 +285,15 @@ class _RecordVisitScreenState extends ConsumerState<RecordVisitScreen> {
                     children: [
                       AppTextField(
                         controller: _discussedController,
-                        label: "What was discussed?",
-                        hint: "e.g. Detailed Curofix 500mg, clinical trials",
-                        prefixIcon: Icons.medication_outlined,
+                        label: "What was discussed / activity",
+                        hint: "e.g. Detailed comparative clinical trials",
+                        prefixIcon: Icons.medical_information_outlined,
                       ),
                       const SizedBox(height: AppSpacing.md),
                       AppTextField(
                         controller: _samplesController,
-                        label: "Samples / Promo Items Given",
-                        hint: "e.g. 5 strips sample, 1 visual aid pad",
+                        label: "What was given / samples handed over",
+                        hint: "e.g. 5 sample strips, 1 product monograph",
                         prefixIcon: Icons.inventory_2_outlined,
                       ),
                     ],

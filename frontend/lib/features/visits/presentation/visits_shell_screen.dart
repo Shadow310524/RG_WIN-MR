@@ -155,37 +155,25 @@ class _FilterChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return SpringButton(
       onTap: onTap,
-      scaleDown: 0.94,
+      scaleDown: 0.95,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: const Duration(milliseconds: 180),
         curve: Curves.easeOutCubic,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          gradient: isSelected ? AppColors.primaryGradient : null,
-          color: isSelected ? null : AppColors.surfaceElevated,
+          color: isSelected ? AppColors.primaryLight : AppColors.surface,
           borderRadius: BorderRadius.circular(AppRadius.pill),
           border: Border.all(
-            color: isSelected
-                ? AppColors.primaryGlow.withOpacity(0.5)
-                : AppColors.border,
+            color: isSelected ? AppColors.primary : AppColors.border,
             width: 1,
           ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: AppColors.primary.withOpacity(0.35),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
         ),
         child: Text(
           label,
           style: TextStyle(
             fontSize: 12,
-            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-            color: isSelected ? Colors.white : AppColors.textSecondary,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            color: isSelected ? AppColors.primaryDark : AppColors.textSecondary,
             letterSpacing: -0.1,
           ),
         ),
@@ -205,7 +193,6 @@ class _VisitCard extends StatelessWidget {
     final dateStr = DateFormat('EEE, d MMM yyyy').format(visit.visitDatetime);
 
     return AppCard(
-      isGlass: true,
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

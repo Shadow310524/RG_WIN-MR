@@ -500,7 +500,6 @@ class _DoctorCard extends StatelessWidget {
 
     return AppCard(
       onTap: onTap,
-      isGlass: true,
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -510,30 +509,23 @@ class _DoctorCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 42,
-                height: 42,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
-                  gradient: AppColors.primaryGradient,
+                  color: AppColors.primaryLight,
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: AppColors.primaryGlow.withOpacity(0.4),
-                    width: 1.5,
+                    color: AppColors.primary.withOpacity(0.3),
+                    width: 1.0,
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withOpacity(0.3),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
                 ),
                 child: Center(
                   child: Text(
                     initialChar,
                     style: const TextStyle(
-                      fontWeight: FontWeight.w900,
+                      fontWeight: FontWeight.w800,
                       fontSize: 16,
-                      color: Colors.white,
+                      color: AppColors.primaryDark,
                     ),
                   ),
                 ),
@@ -550,7 +542,7 @@ class _DoctorCard extends StatelessWidget {
                             doctor.name,
                             style: const TextStyle(
                               fontSize: 15,
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w700,
                               color: AppColors.textPrimary,
                               letterSpacing: -0.2,
                             ),
@@ -574,7 +566,7 @@ class _DoctorCard extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.primaryGlow,
+                        color: AppColors.primaryDark,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -591,7 +583,7 @@ class _DoctorCard extends StatelessWidget {
                   color: AppColors.textSecondary,
                 ),
                 padding: EdgeInsets.zero,
-                color: AppColors.surfaceElevated,
+                color: AppColors.surface,
                 itemBuilder: (context) => [
                   const PopupMenuItem(
                     value: "view",
@@ -628,7 +620,7 @@ class _DoctorCard extends StatelessWidget {
             Row(
               children: [
                 const Icon(
-                  Icons.local_hospital_rounded,
+                  Icons.local_hospital_outlined,
                   size: 14,
                   color: AppColors.textMuted,
                 ),
@@ -654,7 +646,7 @@ class _DoctorCard extends StatelessWidget {
             Row(
               children: [
                 const Icon(
-                  Icons.location_on_rounded,
+                  Icons.location_on_outlined,
                   size: 14,
                   color: AppColors.textMuted,
                 ),
@@ -674,7 +666,7 @@ class _DoctorCard extends StatelessWidget {
 
           const Divider(height: AppSpacing.sm, color: AppColors.border),
 
-          // Action Row: 📞 Call & View Profile
+          // Action Row: Call, Log Visit, View Profile
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -687,24 +679,24 @@ class _DoctorCard extends StatelessWidget {
                     ),
                   );
                 },
-                scaleDown: 0.94,
+                scaleDown: 0.95,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
+                    horizontal: 10,
+                    vertical: 5,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.success.withOpacity(0.12),
+                    color: AppColors.successLight,
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                     border: Border.all(
-                      color: AppColors.success.withOpacity(0.3),
+                      color: AppColors.success.withOpacity(0.2),
                       width: 1,
                     ),
                   ),
                   child: Row(
                     children: [
                       const Icon(
-                        Icons.phone_rounded,
+                        Icons.phone_outlined,
                         size: 13,
                         color: AppColors.success,
                       ),
@@ -721,41 +713,65 @@ class _DoctorCard extends StatelessWidget {
                   ),
                 ),
               ),
-              SpringButton(
-                onTap: onTap,
-                scaleDown: 0.94,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                    border: Border.all(
-                      color: AppColors.primaryGlow.withOpacity(0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: const Row(
-                    children: [
-                      Text(
-                        "View Profile",
+              Row(
+                children: [
+                  SpringButton(
+                    onTap: () =>
+                        context.go('/visits/add?doctor_id=${doctor.id}'),
+                    scaleDown: 0.95,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryVeryLight,
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                      ),
+                      child: const Text(
+                        "Log Visit",
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.primaryGlow,
+                          color: AppColors.primaryDark,
                         ),
                       ),
-                      SizedBox(width: 2),
-                      Icon(
-                        Icons.chevron_right_rounded,
-                        size: 14,
-                        color: AppColors.primaryGlow,
-                      ),
-                    ],
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 6),
+                  SpringButton(
+                    onTap: onTap,
+                    scaleDown: 0.95,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryLight,
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                      ),
+                      child: const Row(
+                        children: [
+                          Text(
+                            "View Profile",
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primaryDark,
+                            ),
+                          ),
+                          SizedBox(width: 2),
+                          Icon(
+                            Icons.chevron_right_rounded,
+                            size: 14,
+                            color: AppColors.primaryDark,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

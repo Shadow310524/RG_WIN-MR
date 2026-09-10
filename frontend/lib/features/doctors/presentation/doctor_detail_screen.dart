@@ -7,6 +7,7 @@ import 'package:rgwin_crm/core/widgets/app_badge.dart';
 import 'package:rgwin_crm/core/widgets/app_button.dart';
 import 'package:rgwin_crm/core/widgets/app_card.dart';
 import 'package:rgwin_crm/core/widgets/app_loading_indicator.dart';
+import 'package:rgwin_crm/core/widgets/section_header.dart';
 import 'package:rgwin_crm/features/doctors/presentation/doctor_controller.dart';
 
 class DoctorDetailScreen extends ConsumerWidget {
@@ -77,12 +78,12 @@ class DoctorDetailScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. Profile Header Card
+              // 1. Central Relationship Hub Header Card
               AppCard(
-                isGlass: true,
                 child: Column(
                   children: [
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         CircleAvatar(
                           radius: 28,
@@ -96,7 +97,7 @@ class DoctorDetailScreen extends ConsumerWidget {
                                       .toUpperCase()
                                 : 'D',
                             style: const TextStyle(
-                              color: AppColors.primaryGlow,
+                              color: AppColors.primaryDark,
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
                             ),
@@ -159,13 +160,13 @@ class DoctorDetailScreen extends ConsumerWidget {
 
                     const Divider(height: AppSpacing.xl),
 
-                    // Quick Actions (Call, Visit, Purchase)
+                    // Primary Actions: [ Call ] [ Log Visit ] [ Purchase ]
                     Row(
                       children: [
                         Expanded(
                           child: AppButton(
                             label: "Call",
-                            icon: Icons.phone,
+                            icon: Icons.phone_outlined,
                             variant: AppButtonVariant.outlined,
                             onPressed: () {
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -208,9 +209,9 @@ class DoctorDetailScreen extends ConsumerWidget {
               const SizedBox(height: AppSpacing.md),
 
               // 2. Contact & Clinic Details Card
-              const Text(
-                "Contact & Clinic",
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              const SectionHeader(
+                title: "Contact & Clinic",
+                subtitle: "Location and direct touchpoints",
               ),
               const SizedBox(height: AppSpacing.xs),
               AppCard(
@@ -238,7 +239,7 @@ class DoctorDetailScreen extends ConsumerWidget {
                         doctor.clinicName!.isNotEmpty)
                       _DetailRow(
                         icon: Icons.local_hospital_outlined,
-                        label: "Clinic / Hospital",
+                        label: "Clinic / Medical Facility",
                         value: doctor.clinicName!,
                       ),
                     if (doctor.address != null && doctor.address!.isNotEmpty)
@@ -253,10 +254,10 @@ class DoctorDetailScreen extends ConsumerWidget {
 
               const SizedBox(height: AppSpacing.md),
 
-              // 3. Territory & Medical Credentials
-              const Text(
-                "Territory & Medical Affiliations",
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              // 3. Territory & Medical Affiliations
+              const SectionHeader(
+                title: "Territory & Credentials",
+                subtitle: "Regulatory and association assignments",
               ),
               const SizedBox(height: AppSpacing.xs),
               AppCard(
@@ -285,9 +286,9 @@ class DoctorDetailScreen extends ConsumerWidget {
               const SizedBox(height: AppSpacing.md),
 
               // 4. Commercial & Purchase Summary
-              const Text(
-                "Purchase & Commercial Summary",
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              const SectionHeader(
+                title: "Purchase & Commercial Summary",
+                subtitle: "Authoritative business performance",
               ),
               const SizedBox(height: AppSpacing.xs),
               AppCard(
@@ -295,23 +296,28 @@ class DoctorDetailScreen extends ConsumerWidget {
                   children: const [
                     _DetailRow(
                       icon: Icons.account_balance_wallet_outlined,
-                      label: "Total Purchase Amount",
-                      value: "Tracked from sales orders",
+                      label: "Total Purchases Booked",
+                      value: "Tracked from sales purchases",
                     ),
                     _DetailRow(
                       icon: Icons.currency_rupee,
                       label: "Realized Revenue",
-                      value: "Authoritative sales total",
+                      value: "Gross realized total",
                     ),
                     _DetailRow(
                       icon: Icons.price_check_outlined,
-                      label: "PTS (Price to Stockist)",
-                      value: "Calculating / Pending formula",
+                      label: "PTS Formula Rate",
+                      value: "Not configured",
+                    ),
+                    _DetailRow(
+                      icon: Icons.pie_chart_outline,
+                      label: "PTS Value",
+                      value: "—",
                     ),
                     _DetailRow(
                       icon: Icons.analytics_outlined,
                       label: "Net Profit / Loss",
-                      value: "Profit/Loss unavailable",
+                      value: "Insufficient data",
                     ),
                   ],
                 ),
@@ -320,9 +326,9 @@ class DoctorDetailScreen extends ConsumerWidget {
               // 5. Field Notes (if available)
               if (doctor.notes != null && doctor.notes!.isNotEmpty) ...[
                 const SizedBox(height: AppSpacing.md),
-                const Text(
-                  "Field Notes",
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                const SectionHeader(
+                  title: "Field Notes",
+                  subtitle: "Observations and relationship history",
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 AppCard(
@@ -339,7 +345,7 @@ class DoctorDetailScreen extends ConsumerWidget {
 
               const SizedBox(height: AppSpacing.md),
 
-              // 5. Phase 4 Placeholder
+              // 6. Recent Visits & Activity Hub
               AppCard(
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
@@ -348,12 +354,12 @@ class DoctorDetailScreen extends ConsumerWidget {
                       Container(
                         padding: const EdgeInsets.all(AppSpacing.sm),
                         decoration: BoxDecoration(
-                          color: AppColors.secondaryLight,
+                          color: AppColors.primaryLight,
                           borderRadius: BorderRadius.circular(AppRadius.md),
                         ),
                         child: const Icon(
                           Icons.assignment_outlined,
-                          color: AppColors.secondary,
+                          color: AppColors.primaryDark,
                           size: 24,
                         ),
                       ),

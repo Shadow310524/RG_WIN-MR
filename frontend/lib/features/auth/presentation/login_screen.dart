@@ -110,7 +110,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                   // Login Form Card
                   AppCard(
-                    isGlass: true,
                     padding: const EdgeInsets.all(AppSpacing.xxl),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,

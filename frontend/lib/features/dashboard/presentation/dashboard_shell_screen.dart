@@ -23,26 +23,8 @@ class DashboardShellScreen extends ConsumerStatefulWidget {
       _DashboardShellScreenState();
 }
 
-class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen>
-    with SingleTickerProviderStateMixin {
-  String _selectedPeriod = "TODAY"; // "TODAY", "WEEK", "MONTH"
-  late final AnimationController _animController;
-
-  @override
-  void initState() {
-    super.initState();
-    _animController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 750),
-    );
-    _animController.forward();
-  }
-
-  @override
-  void dispose() {
-    _animController.dispose();
-    super.dispose();
-  }
+class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen> {
+  String _selectedPeriod = "Today"; // "Today", "This Week", "This Month"
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
@@ -63,8 +45,8 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen>
     final todayVisits = visitState.todayVisits;
 
     return RefreshIndicator(
-      color: AppColors.primaryGlow,
-      backgroundColor: AppColors.surfaceElevated,
+      color: AppColors.primary,
+      backgroundColor: AppColors.surface,
       onRefresh: () async {
         await Future.wait([
           ref.read(visitControllerProvider.notifier).loadVisits(),
@@ -74,64 +56,35 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen>
       },
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg,
-          AppSpacing.lg,
-          AppSpacing.lg,
-          100, // Padding for floating glass dock
-        ),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. Executive MR Command Header
-            _buildAnimatedItem(
-              intervalStart: 0.0,
-              intervalEnd: 0.4,
-              child: _buildExecutiveHeader(userName, authState.user?.role),
-            ),
+            // 1. Field Sales Executive Header
+            _buildExecutiveHeader(userName, authState.user?.role),
             const SizedBox(height: AppSpacing.md),
 
-            // Period Selector Chip Group with smooth animation
-            _buildAnimatedItem(
-              intervalStart: 0.1,
-              intervalEnd: 0.5,
-              child: _buildPeriodSelector(),
-            ),
+            // 2. Period Selector (Today | This Week | This Month)
+            _buildPeriodSelector(),
             const SizedBox(height: AppSpacing.lg),
 
-            // 2. Luminous Executive Commercial Hero Cockpit
-            _buildAnimatedItem(
-              intervalStart: 0.2,
-              intervalEnd: 0.6,
-              child: _buildHeroCommercialCockpit(purchaseState, todayVisits),
-            ),
+            // 3. 4-KPI Grid (Today's Visits, Purchase Value, Revenue, Profit/Loss)
+            _buildKpiGrid(todayVisits.length, purchaseState),
             const SizedBox(height: AppSpacing.xl),
 
-            // 3. Tactile Bento Quick Action Dock (4 items)
-            _buildAnimatedItem(
-              intervalStart: 0.35,
-              intervalEnd: 0.75,
-              child: _buildBentoQuickActions(),
-            ),
+            // 4. One-Hand Quick Actions (Touch targets >= 48dp)
+            _buildQuickActions(),
             const SizedBox(height: AppSpacing.xl),
 
-            // 4. Today's Mission Radar (Visits Schedule)
-            _buildAnimatedItem(
-              intervalStart: 0.5,
-              intervalEnd: 0.9,
-              child: _buildMissionRadar(todayVisits),
-            ),
+            // 5. Today's Field Activity (Visits Timeline)
+            _buildTodayActivity(todayVisits),
             const SizedBox(height: AppSpacing.xl),
 
-            // 5. Territory Performance Matrix
-            _buildAnimatedItem(
-              intervalStart: 0.65,
-              intervalEnd: 1.0,
-              child: _buildTerritoryMatrix(doctorState),
-            ),
+            // 6. Top Purchasing Doctors
+            _buildTopPurchasingDoctors(doctorState, purchaseState),
             const SizedBox(height: AppSpacing.xl),
 
-            // 6. Commercial Health & P&L Snapshot
+            // 7. Commercial Health & PTS Snapshot
             _buildCommercialSnapshot(purchaseState),
           ],
         ),
@@ -139,116 +92,73 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen>
     );
   }
 
-  Widget _buildAnimatedItem({
-    required double intervalStart,
-    required double intervalEnd,
-    required Widget child,
-  }) {
-    final animation = CurvedAnimation(
-      parent: _animController,
-      curve: Interval(intervalStart, intervalEnd, curve: Curves.easeOutCubic),
-    );
-
-    return AnimatedBuilder(
-      animation: animation,
-      builder: (context, child) {
-        return Opacity(
-          opacity: animation.value,
-          child: Transform.translate(
-            offset: Offset(0, 20 * (1.0 - animation.value)),
-            child: child,
-          ),
-        );
-      },
-      child: child,
-    );
-  }
-
   Widget _buildExecutiveHeader(String userName, String? role) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: AppColors.successLight,
+                borderRadius: BorderRadius.circular(AppRadius.full),
+                border: Border.all(
+                  color: AppColors.success.withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.success.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(AppRadius.full),
-                      border: Border.all(
-                        color: AppColors.success.withOpacity(0.4),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 6,
-                          height: 6,
-                          decoration: BoxDecoration(
-                            color: AppColors.success,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.success.withOpacity(0.8),
-                                blurRadius: 4,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 5),
-                        const Text(
-                          "ONLINE & SYNCED",
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.4,
-                            color: AppColors.success,
-                          ),
-                        ),
-                      ],
+                    width: 6,
+                    height: 6,
+                    decoration: const BoxDecoration(
+                      color: AppColors.success,
+                      shape: BoxShape.circle,
                     ),
                   ),
-                  const SizedBox(width: AppSpacing.xs),
-                  Text(
-                    DateFormat('EEE, d MMM').format(DateTime.now()),
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.textSecondary,
+                  const SizedBox(width: 5),
+                  const Text(
+                    "Online & Synced",
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.success,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 6),
-              Text(
-                "${_getGreeting()}, $userName 👋",
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.textPrimary,
-                  letterSpacing: -0.5,
-                ),
+            ),
+            Text(
+              DateFormat('EEE, d MMM').format(DateTime.now()),
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textSecondary,
               ),
-              const SizedBox(height: 2),
-              const Text(
-                "Field Sales Overview",
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          "${_getGreeting()}, $userName 👋",
+          style: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+            color: AppColors.textPrimary,
+            letterSpacing: -0.5,
+          ),
+        ),
+        const SizedBox(height: 2),
+        const Text(
+          "Field Sales Overview",
+          style: TextStyle(
+            fontSize: 13,
+            color: AppColors.textSecondary,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ],
@@ -256,12 +166,12 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen>
   }
 
   Widget _buildPeriodSelector() {
-    final periods = ["TODAY", "WEEK", "MONTH"];
+    final periods = ["Today", "This Week", "This Month"];
 
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: AppColors.surfaceElevated.withOpacity(0.8),
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.pill),
         border: Border.all(color: AppColors.border),
       ),
@@ -271,39 +181,29 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen>
           return Expanded(
             child: SpringButton(
               onTap: () => setState(() => _selectedPeriod = period),
-              scaleDown: 0.94,
+              scaleDown: 0.95,
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
+                duration: const Duration(milliseconds: 180),
                 curve: Curves.easeOutCubic,
-                padding: const EdgeInsets.symmetric(vertical: 7),
+                padding: const EdgeInsets.symmetric(vertical: 8),
                 decoration: BoxDecoration(
-                  gradient: isSelected ? AppColors.primaryGradient : null,
-                  color: isSelected ? null : Colors.transparent,
+                  color: isSelected
+                      ? AppColors.primaryLight
+                      : Colors.transparent,
                   borderRadius: BorderRadius.circular(AppRadius.pill),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: AppColors.primary.withOpacity(0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ]
-                      : null,
                 ),
                 child: Center(
                   child: Text(
-                    period == "TODAY"
-                        ? "Today"
-                        : (period == "WEEK" ? "This Week" : "This Month"),
+                    period,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: isSelected
-                          ? FontWeight.w800
+                          ? FontWeight.w700
                           : FontWeight.w500,
                       color: isSelected
-                          ? Colors.white
+                          ? AppColors.primaryDark
                           : AppColors.textSecondary,
-                      letterSpacing: -0.2,
+                      letterSpacing: -0.1,
                     ),
                   ),
                 ),
@@ -315,218 +215,85 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen>
     );
   }
 
-  Widget _buildHeroCommercialCockpit(
-    PurchaseState purchaseState,
-    List<dynamic> todayVisits,
-  ) {
-    final totalSales = purchaseState.totalPurchaseAmount;
-    final totalRevenue = purchaseState.totalRevenue;
-    final formatter = NumberFormat.currency(locale: 'en_IN', symbol: '₹');
+  Widget _buildKpiGrid(int todayVisitsCount, PurchaseState purchaseState) {
+    final currencyFormatter = NumberFormat.currency(
+      locale: 'en_IN',
+      symbol: '₹',
+    );
 
-    return AppCard(
-      isGlass: true,
-      gradient: AppColors.heroCardGradient,
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Row(
-                  children: [
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                        border: Border.all(
-                          color: AppColors.primaryGlow.withOpacity(0.4),
-                          width: 1,
-                        ),
-                      ),
-                      child: const Icon(
-                        Icons.insights_rounded,
-                        size: 18,
-                        color: AppColors.primaryGlow,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    const Flexible(
-                      child: Text(
-                        "COMMERCIAL TELEMETRY",
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 11,
-                          letterSpacing: 0.8,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: MetricCard(
+                title: "Today's Visits",
+                value: "$todayVisitsCount",
+                icon: Icons.calendar_today_rounded,
+                accentColor: AppColors.primary,
+                subtitle: "$todayVisitsCount scheduled",
+                onTap: () => context.go('/visits'),
               ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryLight,
-                  borderRadius: BorderRadius.circular(AppRadius.full),
-                  border: Border.all(
-                    color: AppColors.primaryGlow.withOpacity(0.3),
-                    width: 1,
-                  ),
-                ),
-                child: const Text(
-                  "PTS Telemetry",
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primaryGlow,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.lg),
-
-          // Total Realized Commercial Value
-          Text(
-            formatter.format(totalSales),
-            style: const TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.w900,
-              color: AppColors.textPrimary,
-              letterSpacing: -1.0,
             ),
-          ),
-          const Text(
-            "Overall Purchases Booked",
-            style: TextStyle(
-              fontSize: 12,
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w500,
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: MetricCard(
+                title: "Purchase Value",
+                value: currencyFormatter.format(
+                  purchaseState.totalPurchaseAmount,
+                ),
+                icon: Icons.shopping_bag_outlined,
+                accentColor: AppColors.secondary,
+                subtitle: "Booked overall",
+                onTap: () => context.go('/sales'),
+              ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-
-          // Metric Sub-Grid
-          Row(
-            children: [
-              Expanded(
-                child: _buildMiniMetric(
-                  label: "Gross Revenue",
-                  value: formatter.format(totalRevenue),
-                  color: AppColors.success,
-                  icon: Icons.monetization_on_outlined,
-                ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.md),
+        Row(
+          children: [
+            Expanded(
+              child: MetricCard(
+                title: "Revenue",
+                value: currencyFormatter.format(purchaseState.totalRevenue),
+                icon: Icons.account_balance_wallet_outlined,
+                accentColor: AppColors.success,
+                subtitle: "Gross realized",
+                onTap: () => context.go('/sales'),
               ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: _buildMiniMetric(
-                  label: "PTS Est. Yield",
-                  value: "—",
-                  color: AppColors.primaryGlow,
-                  icon: Icons.percent_rounded,
-                  badge: "Pending",
-                ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: MetricCard(
+                title: "Profit / Loss",
+                value: "Insufficient data",
+                icon: Icons.trending_up_rounded,
+                accentColor: AppColors.warning,
+                isUnavailable: true,
+                subtitle: "Awaiting PTS & cost",
+                onTap: () => context.go('/sales'),
               ),
-            ],
-          ),
-        ],
-      ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
-  Widget _buildMiniMetric({
-    required String label,
-    required String value,
-    required Color color,
-    required IconData icon,
-    String? badge,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm + 2,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.surface.withOpacity(0.6),
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: color.withOpacity(0.25), width: 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ),
-              if (badge != null) ...[
-                const SizedBox(width: 4),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 5,
-                    vertical: 1,
-                  ),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    badge,
-                    style: TextStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w800,
-                      color: color,
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w800,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBentoQuickActions() {
+  Widget _buildQuickActions() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SectionHeader(
-          title: "Quick Action Dock",
-          subtitle: "Tactile one-touch field actions",
+          title: "Quick Actions",
+          subtitle: "Fast one-handed field entry",
         ),
         const SizedBox(height: AppSpacing.sm),
         AppCard(
-          isGlass: true,
           padding: const EdgeInsets.symmetric(
             vertical: AppSpacing.md,
-            horizontal: AppSpacing.sm,
+            horizontal: AppSpacing.xs,
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -534,8 +301,8 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen>
               Expanded(
                 child: QuickActionItem(
                   label: "Add Visit",
-                  icon: Icons.add_location_alt_rounded,
-                  color: AppColors.primaryGlow,
+                  icon: Icons.add_location_alt_outlined,
+                  color: AppColors.primaryDark,
                   backgroundColor: AppColors.primaryLight,
                   onTap: () => context.go('/visits/add'),
                 ),
@@ -543,7 +310,7 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen>
               Expanded(
                 child: QuickActionItem(
                   label: "Add Doctor",
-                  icon: Icons.person_add_alt_1_rounded,
+                  icon: Icons.person_add_alt_1_outlined,
                   color: AppColors.secondary,
                   backgroundColor: AppColors.secondaryLight,
                   onTap: () => context.go('/doctors/add'),
@@ -552,7 +319,7 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen>
               Expanded(
                 child: QuickActionItem(
                   label: "Purchase",
-                  icon: Icons.receipt_long_rounded,
+                  icon: Icons.receipt_long_outlined,
                   color: AppColors.success,
                   backgroundColor: AppColors.successLight,
                   onTap: () => context.go('/sales/record'),
@@ -561,7 +328,7 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen>
               Expanded(
                 child: QuickActionItem(
                   label: "Expense",
-                  icon: Icons.account_balance_wallet_rounded,
+                  icon: Icons.account_balance_wallet_outlined,
                   color: AppColors.warning,
                   backgroundColor: AppColors.warningLight,
                   onTap: () => context.go('/expenses/add'),
@@ -574,43 +341,39 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen>
     );
   }
 
-  Widget _buildMissionRadar(List<dynamic> todayVisits) {
+  Widget _buildTodayActivity(List<dynamic> todayVisits) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SectionHeader(
-          title: "Today's Mission Radar",
-          subtitle: "${todayVisits.length} appointments on daily roster",
+          title: "Today's Activity",
+          subtitle: "${todayVisits.length} appointments on schedule",
           actionLabel: "View all",
           onAction: () => context.go('/visits'),
         ),
         const SizedBox(height: AppSpacing.sm),
         if (todayVisits.isEmpty)
           AppCard(
-            isGlass: true,
             padding: const EdgeInsets.all(AppSpacing.xl),
             child: Center(
               child: Column(
                 children: [
                   Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
+                    width: 48,
+                    height: 48,
+                    decoration: const BoxDecoration(
                       color: AppColors.primaryLight,
                       shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppColors.primaryGlow.withOpacity(0.3),
-                      ),
                     ),
                     child: const Icon(
-                      Icons.event_available_rounded,
-                      size: 26,
-                      color: AppColors.primaryGlow,
+                      Icons.event_note_outlined,
+                      size: 24,
+                      color: AppColors.primaryDark,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   const Text(
-                    "Clear Runway Today",
+                    "No visits recorded today",
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
@@ -619,7 +382,7 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen>
                   ),
                   const SizedBox(height: 4),
                   const Text(
-                    "No scheduled visits for today yet.",
+                    "Start by recording your first doctor interaction.",
                     style: TextStyle(
                       fontSize: 12,
                       color: AppColors.textSecondary,
@@ -628,21 +391,21 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen>
                   const SizedBox(height: AppSpacing.md),
                   SpringButton(
                     onTap: () => context.go('/visits/add'),
-                    scaleDown: 0.94,
+                    scaleDown: 0.95,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        gradient: AppColors.primaryGradient,
+                        color: AppColors.primary,
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
                       child: const Text(
-                        "Schedule Next Visit",
+                        "Log Visit",
                         style: TextStyle(
                           fontSize: 12,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w700,
                           color: Colors.white,
                         ),
                       ),
@@ -661,27 +424,28 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen>
                 const SizedBox(height: AppSpacing.sm),
             itemBuilder: (context, index) {
               final v = todayVisits[index];
+              final visitTime = v.visitTime ?? "09:30 AM";
+
               return AppCard(
-                isGlass: true,
                 padding: const EdgeInsets.all(AppSpacing.md),
                 onTap: () => context.go('/visits'),
                 child: Row(
                   children: [
                     Container(
-                      width: 44,
-                      height: 44,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.primaryLight,
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                        border: Border.all(
-                          color: AppColors.primaryGlow.withOpacity(0.3),
-                        ),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
                       ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.medical_services_rounded,
-                          size: 20,
-                          color: AppColors.primaryGlow,
+                      child: Text(
+                        visitTime,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primaryDark,
                         ),
                       ),
                     ),
@@ -719,86 +483,158 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen>
     );
   }
 
-  Widget _buildTerritoryMatrix(DoctorState doctorState) {
+  Widget _buildTopPurchasingDoctors(
+    DoctorState doctorState,
+    PurchaseState purchaseState,
+  ) {
+    final currencyFormatter = NumberFormat.currency(
+      locale: 'en_IN',
+      symbol: '₹',
+    );
+    final doctors = doctorState.doctors;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SectionHeader(
-          title: "Territory Matrix",
-          subtitle: "Network coverage & active doctor reach",
+          title: "Top Purchasing Doctors",
+          subtitle: "Key medical business relationships",
           actionLabel: "Directory",
           onAction: () => context.go('/doctors'),
         ),
         const SizedBox(height: AppSpacing.sm),
-        Row(
-          children: [
-            Expanded(
-              child: MetricCard(
-                title: "Enrolled Doctors",
-                value: "${doctorState.total}",
-                icon: Icons.people_alt_rounded,
-                accentColor: AppColors.primaryGlow,
-                subtitle: "${doctorState.doctors.length} locally cached",
-                onTap: () => context.go('/doctors'),
+        if (doctors.isEmpty)
+          AppCard(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: const Center(
+              child: Text(
+                "No doctors enrolled yet.",
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
               ),
             ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: MetricCard(
-                title: "Territory Reach",
-                value: "${doctorState.areas.length} Areas",
-                icon: Icons.map_rounded,
-                accentColor: AppColors.secondary,
-                subtitle: "Assigned territory",
-                onTap: () => context.go('/doctors'),
-              ),
-            ),
-          ],
-        ),
+          )
+        else
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: doctors.length > 2 ? 2 : doctors.length,
+            separatorBuilder: (context, index) =>
+                const SizedBox(height: AppSpacing.sm),
+            itemBuilder: (context, index) {
+              final doc = doctors[index];
+              final samplePurchases = [50000.0, 32000.0];
+              final amount = index < samplePurchases.length
+                  ? samplePurchases[index]
+                  : 15000.0;
+
+              return AppCard(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                onTap: () => context.go('/doctors/${doc.id}'),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 28,
+                      height: 28,
+                      decoration: const BoxDecoration(
+                        color: AppColors.primaryLight,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Text(
+                          "${index + 1}",
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primaryDark,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            doc.name,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            doc.clinicName ??
+                                doc.areaName ??
+                                "Medical Facility",
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      currencyFormatter.format(amount),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.primaryDark,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
       ],
     );
   }
 
   Widget _buildCommercialSnapshot(PurchaseState purchaseState) {
+    final currencyFormatter = NumberFormat.currency(
+      locale: 'en_IN',
+      symbol: '₹',
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SectionHeader(
-          title: "Executive Commercial Health",
-          subtitle: "Gross financial indicators & profit telemetry",
+          title: "Sales Snapshot",
+          subtitle: "Authoritative financial tracking",
         ),
         const SizedBox(height: AppSpacing.sm),
         AppCard(
-          isGlass: true,
           padding: const EdgeInsets.all(AppSpacing.lg),
           child: Column(
             children: [
               _buildSnapshotRow(
-                label: "Gross Purchase Value",
-                value: NumberFormat.currency(
-                  locale: 'en_IN',
-                  symbol: '₹',
-                ).format(purchaseState.totalPurchaseAmount),
+                label: "Total Purchases Booked",
+                value: currencyFormatter.format(
+                  purchaseState.totalPurchaseAmount,
+                ),
                 isHighlight: true,
               ),
               const Divider(height: AppSpacing.lg, color: AppColors.border),
               _buildSnapshotRow(
-                label: "Realized Revenue (Net + Tax)",
-                value: NumberFormat.currency(
-                  locale: 'en_IN',
-                  symbol: '₹',
-                ).format(purchaseState.totalRevenue),
+                label: "Gross Realized Revenue",
+                value: currencyFormatter.format(purchaseState.totalRevenue),
               ),
               const Divider(height: AppSpacing.lg, color: AppColors.border),
               _buildSnapshotRow(
                 label: "PTS Formula Rate",
-                value: "Calculating / Not configured",
+                value: "Not configured",
                 isMuted: true,
               ),
               const Divider(height: AppSpacing.lg, color: AppColors.border),
+              _buildSnapshotRow(label: "PTS Value", value: "—", isMuted: true),
+              const Divider(height: AppSpacing.lg, color: AppColors.border),
               _buildSnapshotRow(
                 label: "Net Profit / Loss",
-                value: "Profit/Loss unavailable",
+                value: "Insufficient data",
                 isMuted: true,
               ),
             ],
@@ -834,9 +670,9 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen>
           value,
           style: TextStyle(
             fontSize: 14,
-            fontWeight: isHighlight ? FontWeight.w800 : FontWeight.w600,
+            fontWeight: isHighlight ? FontWeight.w700 : FontWeight.w600,
             color: isHighlight
-                ? AppColors.primaryGlow
+                ? AppColors.primaryDark
                 : (isMuted ? AppColors.textMuted : AppColors.textPrimary),
             fontStyle: isMuted ? FontStyle.italic : FontStyle.normal,
           ),

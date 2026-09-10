@@ -27,26 +27,18 @@ class MoreShellScreen extends ConsumerWidget {
             children: [
               // User Profile Banner Card
               AppCard(
-                isGlass: true,
                 child: Row(
                   children: [
                     Container(
-                      width: 56,
-                      height: 56,
+                      width: 52,
+                      height: 52,
                       decoration: BoxDecoration(
-                        gradient: AppColors.primaryGradient,
+                        color: AppColors.primaryLight,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: AppColors.primaryGlow.withOpacity(0.4),
-                          width: 1.5,
+                          color: AppColors.primary.withOpacity(0.3),
+                          width: 1.0,
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primary.withOpacity(0.3),
-                            blurRadius: 12,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
                       ),
                       child: Center(
                         child: Text(
@@ -54,9 +46,9 @@ class MoreShellScreen extends ConsumerWidget {
                               ? user!.fullName.substring(0, 1).toUpperCase()
                               : "U",
                           style: const TextStyle(
-                            fontSize: 22,
+                            fontSize: 20,
                             fontWeight: FontWeight.w800,
-                            color: Colors.white,
+                            color: AppColors.primaryDark,
                           ),
                         ),
                       ),
@@ -67,10 +59,10 @@ class MoreShellScreen extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            user?.fullName ?? "Field Sales User",
+                            user?.fullName ?? "Field Representative",
                             style: const TextStyle(
                               fontSize: 16,
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w700,
                               color: AppColors.textPrimary,
                             ),
                           ),
@@ -106,11 +98,51 @@ class MoreShellScreen extends ConsumerWidget {
               ),
               const SizedBox(height: AppSpacing.xl),
 
-              // Quick Modules Section
-              const SectionHeader(title: "CRM Modules & Tools"),
+              // Group 1: Business
+              const SectionHeader(
+                title: "Business",
+                subtitle: "Commercial tracking, analytics and claims",
+              ),
               const SizedBox(height: AppSpacing.xs),
               AppCard(
-                isGlass: true,
+                padding: EdgeInsets.zero,
+                child: Column(
+                  children: [
+                    _MenuTile(
+                      icon: Icons.bar_chart_rounded,
+                      title: "Commercial Analytics",
+                      subtitle: "Doctor, area & territory performance insights",
+                      iconColor: AppColors.primaryDark,
+                      onTap: () => context.go('/analytics'),
+                    ),
+                    const Divider(height: 1, color: AppColors.border),
+                    _MenuTile(
+                      icon: Icons.receipt_long_outlined,
+                      title: "Field Expenses",
+                      subtitle: "Travel, fuel, food and promotion claims",
+                      iconColor: AppColors.warning,
+                      onTap: () => context.go('/expenses/add'),
+                    ),
+                    const Divider(height: 1, color: AppColors.border),
+                    _MenuTile(
+                      icon: Icons.shopping_bag_outlined,
+                      title: "Sales & Purchases",
+                      subtitle: "Commercial purchase orders and revenue totals",
+                      iconColor: AppColors.success,
+                      onTap: () => context.go('/sales'),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xl),
+
+              // Group 2: Field Work
+              const SectionHeader(
+                title: "Field Work",
+                subtitle: "Reminders, doctor prescriptions and orders",
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              AppCard(
                 padding: EdgeInsets.zero,
                 child: Column(
                   children: [
@@ -118,37 +150,53 @@ class MoreShellScreen extends ConsumerWidget {
                       icon: Icons.calendar_today_outlined,
                       title: "Follow-ups & Reminders",
                       subtitle: "Scheduled doctor visits and call reminders",
+                      iconColor: AppColors.primaryDark,
                       onTap: () => context.go('/followups'),
                     ),
-                    const Divider(height: 1),
+                    const Divider(height: 1, color: AppColors.border),
                     _MenuTile(
-                      icon: Icons.bar_chart_rounded,
-                      title: "Commercial Analytics",
-                      subtitle: "Doctor, area & territory performance insights",
-                      onTap: () => context.go('/analytics'),
+                      icon: Icons.assignment_outlined,
+                      title: "Prescriptions",
+                      subtitle: "Doctor prescribing trends and habits",
+                      iconColor: AppColors.secondary,
+                      onTap: () => context.go('/prescriptions'),
                     ),
-                    const Divider(height: 1),
+                    const Divider(height: 1, color: AppColors.border),
                     _MenuTile(
-                      icon: Icons.receipt_long_outlined,
-                      title: "Record Field Expense",
-                      subtitle: "Travel, fuel, DA and promotion claims",
-                      onTap: () => context.go('/expenses/add'),
-                    ),
-                    const Divider(height: 1),
-                    _MenuTile(
-                      icon: Icons.medication_outlined,
-                      title: "Healix Product Catalog",
-                      subtitle:
-                          "Authoritative 31-product master catalog & details",
-                      onTap: () => context.go('/products'),
+                      icon: Icons.local_shipping_outlined,
+                      title: "Orders",
+                      subtitle: "Dispatched and pending hospital orders",
+                      iconColor: AppColors.info,
+                      onTap: () => context.go('/orders'),
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: AppSpacing.xl),
 
-              // Account & Session
-              const SectionHeader(title: "Account & System"),
+              // Group 3: Catalog
+              const SectionHeader(
+                title: "Catalog",
+                subtitle: "Authoritative Healix product references",
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              AppCard(
+                padding: EdgeInsets.zero,
+                child: _MenuTile(
+                  icon: Icons.medication_outlined,
+                  title: "Product References",
+                  subtitle: "Read-only 31-product master catalog & details",
+                  iconColor: AppColors.primaryDark,
+                  onTap: () => context.go('/products'),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xl),
+
+              // Group 4: Account & System
+              const SectionHeader(
+                title: "Account & System",
+                subtitle: "Data synchronization and secure session",
+              ),
               const SizedBox(height: AppSpacing.xs),
               AppCard(
                 padding: EdgeInsets.zero,
@@ -158,6 +206,7 @@ class MoreShellScreen extends ConsumerWidget {
                       icon: Icons.sync_rounded,
                       title: "Offline Storage & Sync",
                       subtitle: "Drift SQLite local database status",
+                      iconColor: AppColors.success,
                       trailing: const Text(
                         "Drift Ready",
                         style: TextStyle(
@@ -177,7 +226,7 @@ class MoreShellScreen extends ConsumerWidget {
                         );
                       },
                     ),
-                    const Divider(height: 1),
+                    const Divider(height: 1, color: AppColors.border),
                     _MenuTile(
                       icon: Icons.logout_rounded,
                       title: "Sign Out",
@@ -222,6 +271,8 @@ class _MenuTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final effectiveColor = iconColor ?? AppColors.primaryDark;
+
     return SpringButton(
       onTap: onTap,
       scaleDown: 0.98,
@@ -230,24 +281,16 @@ class _MenuTile extends StatelessWidget {
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: (iconColor ?? AppColors.primaryGlow).withOpacity(0.15),
+            color: effectiveColor.withOpacity(0.12),
             borderRadius: BorderRadius.circular(AppRadius.sm),
-            border: Border.all(
-              color: (iconColor ?? AppColors.primaryGlow).withOpacity(0.3),
-              width: 1,
-            ),
           ),
-          child: Icon(
-            icon,
-            size: 20,
-            color: iconColor ?? AppColors.primaryGlow,
-          ),
+          child: Icon(icon, size: 20, color: effectiveColor),
         ),
         title: Text(
           title,
           style: TextStyle(
             fontSize: 14,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
             color: textColor ?? AppColors.textPrimary,
           ),
         ),
