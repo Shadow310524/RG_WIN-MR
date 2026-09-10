@@ -14,7 +14,9 @@ class Association(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     __tablename__ = "associations"
 
     name: Mapped[str] = mapped_column(String(200), unique=True, index=True, nullable=False)
+    code: Mapped[str | None] = mapped_column(String(50), unique=True, index=True, nullable=True)
     short_name: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[AssociationStatusEnum] = mapped_column(
         Enum(AssociationStatusEnum, native_enum=False, length=20),
         default=AssociationStatusEnum.ACTIVE,
@@ -23,4 +25,9 @@ class Association(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
+    @property
+    def is_active(self) -> bool:
+        return self.status == AssociationStatusEnum.ACTIVE
+
     doctor_associations = relationship("DoctorAssociation", back_populates="association")
+    doctors = relationship("Doctor", back_populates="association")

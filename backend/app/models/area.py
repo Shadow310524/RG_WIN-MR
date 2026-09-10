@@ -14,7 +14,8 @@ class Area(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     __tablename__ = "areas"
 
     name: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
-    code: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    code: Mapped[str] = mapped_column(String(50), unique=True, index=True, nullable=False)
+    description: Mapped[str | None] = mapped_column(String(255), nullable=True)
     status: Mapped[AreaStatusEnum] = mapped_column(
         Enum(AreaStatusEnum, native_enum=False, length=20),
         default=AreaStatusEnum.ACTIVE,
@@ -22,4 +23,10 @@ class Area(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         index=True
     )
 
+    @property
+    def is_active(self) -> bool:
+        return self.status == AreaStatusEnum.ACTIVE
+
+    # Relationships
     doctors = relationship("Doctor", back_populates="area")
+    mr_assignments = relationship("MRAreaAssignment", back_populates="area", cascade="all, delete-orphan")

@@ -1,6 +1,7 @@
 from app.models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 from app.models.user import User, RoleEnum, UserStatusEnum, RevokedToken
 from app.models.area import Area, AreaStatusEnum
+from app.models.mr_assignment import MRAreaAssignment
 from app.models.association import Association, AssociationStatusEnum
 from app.models.doctor import Doctor, DoctorStatusEnum, DoctorAssociation
 from app.models.product_reference import ProductReference
@@ -31,6 +32,7 @@ __all__ = [
     "RevokedToken",
     "Area",
     "AreaStatusEnum",
+    "MRAreaAssignment",
     "Association",
     "AssociationStatusEnum",
     "Doctor",

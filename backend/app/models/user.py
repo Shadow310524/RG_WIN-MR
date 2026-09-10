@@ -38,6 +38,7 @@ class User(Base, UUIDPrimaryKeyMixin, TimestampMixin):
 
     # Relationships
     revoked_tokens = relationship("RevokedToken", back_populates="user", cascade="all, delete-orphan")
+    area_assignments = relationship("MRAreaAssignment", back_populates="mr", cascade="all, delete-orphan")
 
 
 class RevokedToken(Base, UUIDPrimaryKeyMixin):
