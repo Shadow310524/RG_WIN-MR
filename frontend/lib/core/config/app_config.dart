@@ -8,12 +8,16 @@ class AppConfig {
 
   /// Base URL resolved appropriately depending on platform target
   static String get apiBaseUrl {
+    const customUrl = String.fromEnvironment('API_URL');
+    if (customUrl.isNotEmpty) {
+      return customUrl;
+    }
     if (kIsWeb) {
       return "http://localhost:8000/api/v1";
     }
-    // Default to localhost for desktop (Windows), or 10.0.2.2 for Android emulator
+    // For Android (physical device with adb reverse or emulator)
     if (defaultTargetPlatform == TargetPlatform.android) {
-      return "http://10.0.2.2:8000/api/v1";
+      return "http://127.0.0.1:8000/api/v1";
     }
     return "http://localhost:8000/api/v1";
   }
