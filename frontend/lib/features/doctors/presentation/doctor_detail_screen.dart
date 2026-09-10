@@ -158,7 +158,7 @@ class DoctorDetailScreen extends ConsumerWidget {
 
                     const Divider(height: AppSpacing.xl),
 
-                    // Quick Actions
+                    // Quick Actions (Call, Visit, Purchase)
                     Row(
                       children: [
                         Expanded(
@@ -176,27 +176,28 @@ class DoctorDetailScreen extends ConsumerWidget {
                             },
                           ),
                         ),
-                        if (doctor.email != null &&
-                            doctor.email!.isNotEmpty) ...[
-                          const SizedBox(width: AppSpacing.md),
-                          Expanded(
-                            child: AppButton(
-                              label: "Email",
-                              icon: Icons.email_outlined,
-                              variant: AppButtonVariant.outlined,
-                              onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      "Emailing ${doctor.email}...",
-                                    ),
-                                    duration: const Duration(seconds: 2),
-                                  ),
-                                );
-                              },
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
+                          child: AppButton(
+                            label: "Visit",
+                            icon: Icons.assignment_outlined,
+                            variant: AppButtonVariant.outlined,
+                            onPressed: () => context.go(
+                              '/visits/add?doctor_id=${doctor.id}',
                             ),
                           ),
-                        ],
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
+                          child: AppButton(
+                            label: "Purchase",
+                            icon: Icons.receipt_long_outlined,
+                            variant: AppButtonVariant.outlined,
+                            onPressed: () => context.go(
+                              '/sales/record?doctor_id=${doctor.id}',
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ],
@@ -280,7 +281,42 @@ class DoctorDetailScreen extends ConsumerWidget {
                 ),
               ),
 
-              // 4. Field Notes (if available)
+              const SizedBox(height: AppSpacing.md),
+
+              // 4. Commercial & Purchase Summary
+              const Text(
+                "Purchase & Commercial Summary",
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              AppCard(
+                child: Column(
+                  children: const [
+                    _DetailRow(
+                      icon: Icons.account_balance_wallet_outlined,
+                      label: "Total Purchase Amount",
+                      value: "Tracked from sales orders",
+                    ),
+                    _DetailRow(
+                      icon: Icons.currency_rupee,
+                      label: "Realized Revenue",
+                      value: "Authoritative sales total",
+                    ),
+                    _DetailRow(
+                      icon: Icons.price_check_outlined,
+                      label: "PTS (Price to Stockist)",
+                      value: "Calculating / Pending formula",
+                    ),
+                    _DetailRow(
+                      icon: Icons.analytics_outlined,
+                      label: "Net Profit / Loss",
+                      value: "Profit/Loss unavailable",
+                    ),
+                  ],
+                ),
+              ),
+
+              // 5. Field Notes (if available)
               if (doctor.notes != null && doctor.notes!.isNotEmpty) ...[
                 const SizedBox(height: AppSpacing.md),
                 const Text(
