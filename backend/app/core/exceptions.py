@@ -21,6 +21,16 @@ class RGWinException(Exception):
         super().__init__(message)
 
 
+class BadRequestException(RGWinException):
+    def __init__(self, message: str = "Bad request", details: Optional[Any] = None, code: str = "BAD_REQUEST"):
+        super().__init__(
+            message=message,
+            status_code=status.HTTP_400_BAD_REQUEST,
+            code=code,
+            details=details,
+        )
+
+
 class NotFoundException(RGWinException):
     def __init__(self, message: str = "Resource not found", details: Optional[Any] = None, code: str = "NOT_FOUND"):
         super().__init__(

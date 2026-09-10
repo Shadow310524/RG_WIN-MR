@@ -79,6 +79,7 @@ class Doctor(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     prescriptions = relationship("Prescription", back_populates="doctor")
     orders = relationship("Order", back_populates="doctor")
     sales = relationship("Sale", back_populates="doctor")
+    promotional_investments = relationship("DoctorPromotionalInvestment", back_populates="doctor", cascade="all, delete-orphan")
 
 
 class DoctorAssociation(Base):

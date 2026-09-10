@@ -15,6 +15,8 @@ import 'package:rgwin_crm/features/doctors/presentation/doctor_controller.dart';
 import 'package:rgwin_crm/features/followups/presentation/follow_up_controller.dart';
 import 'package:rgwin_crm/features/sales/presentation/purchase_controller.dart';
 import 'package:rgwin_crm/features/visits/presentation/visit_controller.dart';
+import 'package:rgwin_crm/features/promotions/presentation/promotional_investment_controller.dart';
+import 'package:rgwin_crm/features/promotions/presentation/record_promotional_investment_dialog.dart';
 
 class DoctorDetailScreen extends ConsumerWidget {
   final String doctorId;
@@ -66,6 +68,7 @@ class DoctorDetailScreen extends ConsumerWidget {
     final visitState = ref.watch(visitControllerProvider);
     final purchaseState = ref.watch(purchaseControllerProvider);
     final followUpState = ref.watch(followUpControllerProvider);
+    final investmentState = ref.watch(promotionalInvestmentControllerProvider);
 
     final doctorVisits = visitState.visits
         .where((v) => v.doctorId == doctorId)
@@ -76,6 +79,9 @@ class DoctorDetailScreen extends ConsumerWidget {
     final doctorFollowUps = followUpState.followUps
         .where((f) => f.doctorId == doctorId)
         .toList();
+    final doctorInvestments = investmentState.investments
+        .where((i) => i.doctorId == doctorId)
+        .toList();
     final pendingFollowUps = doctorFollowUps
         .where((f) => f.status == "PENDING")
         .toList();
@@ -83,6 +89,10 @@ class DoctorDetailScreen extends ConsumerWidget {
     final totalPurchaseVal = doctorPurchases.fold(
       0.0,
       (sum, p) => sum + p.purchaseAmount,
+    );
+    final totalInvestVal = doctorInvestments.fold(
+      0.0,
+      (sum, i) => sum + i.amount,
     );
     final latestPurchase = doctorPurchases.isNotEmpty
         ? doctorPurchases.first
@@ -113,6 +123,20 @@ class DoctorDetailScreen extends ConsumerWidget {
               "Total: ₹${NumberFormat('#,##,###.00').format(p.totalAmount)} • PTS: Not configured",
           icon: Icons.receipt_long_outlined,
           badgeColor: AppColors.success,
+        ),
+      );
+    }
+    for (final inv in doctorInvestments) {
+      timelineItems.add(
+        _TimelineItem(
+          date: inv.investmentDate,
+          typeTitle: "Promotional (${inv.typeDisplay})",
+          mainText: "₹${NumberFormat('#,##,###.00').format(inv.amount)}",
+          subText: inv.visitId != null
+              ? "Linked to Visit • ${inv.notes ?? 'Attributable promotional spend'}"
+              : (inv.notes ?? "Doctor promotional investment"),
+          icon: Icons.inventory_2_outlined,
+          badgeColor: AppColors.primary,
         ),
       );
     }
@@ -381,10 +405,11 @@ class DoctorDetailScreen extends ConsumerWidget {
 
                 const SizedBox(height: AppSpacing.md),
 
-                // 4. Commercial & Purchase Summary
+                // 4. Commercial & Profitability Overview
                 SectionHeader(
                   title: "Purchase & Commercial Summary",
-                  subtitle: "Authoritative business performance",
+                  subtitle:
+                      "Commercial Worth: Business Value vs Promotional Spend",
                   actionLabel: "Record Purchase",
                   onAction: () =>
                       context.push('/sales/record?doctor_id=${doctor.id}'),
@@ -395,10 +420,17 @@ class DoctorDetailScreen extends ConsumerWidget {
                     children: [
                       _DetailRow(
                         icon: Icons.account_balance_wallet_outlined,
-                        label: "Total Purchases Booked",
+                        label: "Business Value (Purchases)",
                         value: doctorPurchases.isEmpty
                             ? "No purchases recorded"
                             : "₹${NumberFormat('#,##,###.00').format(totalPurchaseVal)}",
+                      ),
+                      _DetailRow(
+                        icon: Icons.inventory_2_outlined,
+                        label: "Promotional Investment",
+                        value: doctorInvestments.isEmpty
+                            ? "No promotional spend"
+                            : "₹${NumberFormat('#,##,###.00').format(totalInvestVal)}",
                       ),
                       if (latestPurchase != null)
                         _DetailRow(
@@ -424,12 +456,181 @@ class DoctorDetailScreen extends ConsumerWidget {
                       ),
                       const _DetailRow(
                         icon: Icons.analytics_outlined,
-                        label: "Net Profit / Loss",
+                        label: "Doctor Commercial Result",
                         value: "Insufficient data",
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      Container(
+                        padding: const EdgeInsets.all(AppSpacing.sm),
+                        decoration: BoxDecoration(
+                          color: AppColors.background,
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(
+                              Icons.shield_outlined,
+                              size: 16,
+                              color: AppColors.textSecondary,
+                            ),
+                            SizedBox(width: AppSpacing.xs),
+                            Expanded(
+                              child: Text(
+                                "Provenance: General field expenses (fuel, food, travel) are kept separate and not deducted from doctor commercial worth.",
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
                 ),
+
+                const SizedBox(height: AppSpacing.md),
+
+                // 4b. Promotional Investment History
+                SectionHeader(
+                  title: "Promotional Investment History",
+                  subtitle:
+                      "Direct promotional spend attributable to this doctor",
+                  actionLabel: "+ Record",
+                  onAction: () => showRecordPromotionalInvestmentSheet(
+                    context,
+                    doctorId: doctor.id,
+                    doctorName: doctor.name,
+                    clinicName: doctor.clinicName,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                if (doctorInvestments.isEmpty)
+                  AppCard(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: AppSpacing.md,
+                      ),
+                      child: Center(
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.inventory_2_outlined,
+                              size: 28,
+                              color: AppColors.textSecondary.withOpacity(0.5),
+                            ),
+                            const SizedBox(height: AppSpacing.xs),
+                            const Text(
+                              "No promotional investments recorded yet.",
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  AppCard(
+                    child: Column(
+                      children: doctorInvestments.take(5).map((inv) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: AppSpacing.xs,
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryLight,
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.sm,
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.receipt_outlined,
+                                  size: 16,
+                                  color: AppColors.primaryDark,
+                                ),
+                              ),
+                              const SizedBox(width: AppSpacing.sm),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Text(
+                                          inv.typeDisplay,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 13,
+                                            color: AppColors.textPrimary,
+                                          ),
+                                        ),
+                                        if (inv.visitId != null) ...[
+                                          const SizedBox(width: 6),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 6,
+                                              vertical: 2,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.secondary
+                                                  .withOpacity(0.12),
+                                              borderRadius:
+                                                  BorderRadius.circular(
+                                                    AppRadius.pill,
+                                                  ),
+                                            ),
+                                            child: const Text(
+                                              "Linked to Visit",
+                                              style: TextStyle(
+                                                fontSize: 9,
+                                                fontWeight: FontWeight.w700,
+                                                color: AppColors.secondary,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                    Text(
+                                      DateFormat(
+                                            'd MMM yyyy',
+                                          ).format(inv.investmentDate) +
+                                          (inv.notes != null
+                                              ? ' • ${inv.notes}'
+                                              : ''),
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Text(
+                                "₹${NumberFormat('#,##,###.00').format(inv.amount)}",
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 13,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
 
                 const SizedBox(height: AppSpacing.md),
 

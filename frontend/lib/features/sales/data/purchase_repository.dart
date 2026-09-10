@@ -29,12 +29,18 @@ class PurchaseRepository {
         options: options,
       );
       final data = response.data;
-      if (data is List) {
-        final serverPurchases = data.map((json) {
+      final List rawItems = data is List
+          ? data
+          : (data is Map && data['items'] is List ? data['items'] as List : []);
+
+      if (rawItems.isNotEmpty || data is Map || data is List) {
+        final serverPurchases = rawItems.map((json) {
           final amt = (json['total_amount'] as num?)?.toDouble() ?? 0.0;
           return PurchaseModel(
             id: json['id'] as String,
             doctorId: json['doctor_id'] as String?,
+            doctorName: json['doctor_name'] as String?,
+            clinicName: json['clinic_name'] as String?,
             purchaseDate:
                 DateTime.tryParse(json['sale_date'] as String? ?? '') ??
                 DateTime.now(),
@@ -50,7 +56,10 @@ class PurchaseRepository {
         }).toList();
 
         // Merge with local purchases not yet synced
-        final all = [..._localPurchases, ...serverPurchases];
+        final all = [
+          ..._localPurchases.where((l) => l.syncState != 'synced'),
+          ...serverPurchases,
+        ];
         return all;
       }
     } catch (_) {

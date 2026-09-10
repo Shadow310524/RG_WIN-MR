@@ -12,6 +12,7 @@ import 'package:rgwin_crm/core/widgets/section_header.dart';
 import 'package:rgwin_crm/features/doctors/presentation/doctor_controller.dart';
 import 'package:rgwin_crm/features/followups/presentation/follow_up_controller.dart';
 import 'package:rgwin_crm/features/visits/presentation/visit_controller.dart';
+import 'package:rgwin_crm/features/promotions/presentation/promotional_investment_controller.dart';
 
 class RecordVisitScreen extends ConsumerStatefulWidget {
   final String? preselectedDoctorId;
@@ -35,11 +36,17 @@ class _RecordVisitScreenState extends ConsumerState<RecordVisitScreen> {
   bool _purchaseOpportunity = false;
   bool _followUpRequired = false;
   DateTime? _followUpDate;
+  bool _promotionalInvestmentRequired = false;
+  String _selectedInvestmentType = "SAMPLE";
 
   final TextEditingController _discussedController = TextEditingController();
   final TextEditingController _samplesController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
   final TextEditingController _followUpTaskController = TextEditingController();
+  final TextEditingController _investmentAmountController =
+      TextEditingController();
+  final TextEditingController _investmentNotesController =
+      TextEditingController();
 
   final List<Map<String, String>> _responseOptions = [
     {
@@ -76,6 +83,8 @@ class _RecordVisitScreenState extends ConsumerState<RecordVisitScreen> {
     _samplesController.dispose();
     _notesController.dispose();
     _followUpTaskController.dispose();
+    _investmentAmountController.dispose();
+    _investmentNotesController.dispose();
     super.dispose();
   }
 
@@ -167,6 +176,24 @@ class _RecordVisitScreenState extends ConsumerState<RecordVisitScreen> {
           );
     }
 
+    if (_promotionalInvestmentRequired) {
+      final amt = double.tryParse(_investmentAmountController.text.trim());
+      if (amt != null && amt > 0) {
+        await ref
+            .read(promotionalInvestmentControllerProvider.notifier)
+            .recordInvestment(
+              doctorId: _selectedDoctorId!,
+              doctorName: _selectedDoctorName,
+              amount: amt,
+              investmentType: _selectedInvestmentType,
+              investmentDate: _visitDateTime,
+              notes: _investmentNotesController.text.trim().isEmpty
+                  ? null
+                  : _investmentNotesController.text.trim(),
+            );
+      }
+    }
+
     if (mounted && success) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -190,11 +217,15 @@ class _RecordVisitScreenState extends ConsumerState<RecordVisitScreen> {
     final dirtyNotes = _notesController.text.trim().isNotEmpty;
     final dirtyFollowUp =
         _followUpRequired && _followUpTaskController.text.trim().isNotEmpty;
+    final dirtyInvestment =
+        _promotionalInvestmentRequired &&
+        _investmentAmountController.text.trim().isNotEmpty;
     return dirtyDoctor ||
         dirtyDiscussed ||
         dirtySamples ||
         dirtyNotes ||
-        dirtyFollowUp;
+        dirtyFollowUp ||
+        dirtyInvestment;
   }
 
   Future<void> _handleBack() async {
@@ -260,6 +291,7 @@ class _RecordVisitScreenState extends ConsumerState<RecordVisitScreen> {
                   const SizedBox(height: AppSpacing.xs),
                   AppCard(
                     child: DropdownButtonFormField<String>(
+                      isExpanded: true,
                       dropdownColor: AppColors.surface,
                       value: _selectedDoctorId,
                       decoration: const InputDecoration(
@@ -427,6 +459,132 @@ class _RecordVisitScreenState extends ConsumerState<RecordVisitScreen> {
                           ),
                         );
                       }).toList(),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+
+                  // 4b. Doctor-Specific Promotional Investment (Optional)
+                  const SectionHeader(
+                    title: "Promotional Investment (Optional)",
+                    subtitle:
+                        "Attribute explicit promotional cost (samples, units, materials)",
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  AppCard(
+                    child: Column(
+                      children: [
+                        SwitchListTile(
+                          key: const Key('switch_promotional_investment'),
+                          contentPadding: EdgeInsets.zero,
+                          activeThumbColor: AppColors.primaryDark,
+                          title: const Text(
+                            "Record Monetary Promotional Investment?",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          subtitle: const Text(
+                            "Attribute explicit promotional cost specifically to this doctor",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          value: _promotionalInvestmentRequired,
+                          onChanged: (val) => setState(
+                            () => _promotionalInvestmentRequired = val,
+                          ),
+                        ),
+                        if (_promotionalInvestmentRequired) ...[
+                          const SizedBox(height: AppSpacing.sm),
+                          const Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              "INVESTMENT TYPE",
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textSecondary,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children:
+                                [
+                                  {"type": "SAMPLE", "label": "Sample"},
+                                  {
+                                    "type": "PROMOTIONAL_UNIT",
+                                    "label": "Promotional Unit",
+                                  },
+                                  {
+                                    "type": "FREE_SUPPLY",
+                                    "label": "Free Supply",
+                                  },
+                                  {
+                                    "type": "PROMOTIONAL_MATERIAL",
+                                    "label": "Material",
+                                  },
+                                  {"type": "OTHER", "label": "Other"},
+                                ].map((cat) {
+                                  final isSelected =
+                                      _selectedInvestmentType == cat["type"];
+                                  return ChoiceChip(
+                                    label: Text(cat["label"]!),
+                                    selected: isSelected,
+                                    selectedColor: AppColors.primary,
+                                    labelStyle: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: isSelected
+                                          ? Colors.white
+                                          : AppColors.textPrimary,
+                                    ),
+                                    backgroundColor: AppColors.background,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.pill,
+                                      ),
+                                      side: BorderSide(
+                                        color: isSelected
+                                            ? AppColors.primary
+                                            : AppColors.border,
+                                      ),
+                                    ),
+                                    onSelected: (selected) {
+                                      if (selected) {
+                                        setState(
+                                          () => _selectedInvestmentType =
+                                              cat["type"]!,
+                                        );
+                                      }
+                                    },
+                                  );
+                                }).toList(),
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          AppTextField(
+                            label: "Monetary Investment (₹)",
+                            hint: "e.g. 500",
+                            controller: _investmentAmountController,
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                            prefixIcon: Icons.currency_rupee,
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          AppTextField(
+                            label: "Investment Details (Optional)",
+                            hint: "e.g. Product sample packs provided",
+                            controller: _investmentNotesController,
+                            maxLines: 2,
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                   const SizedBox(height: AppSpacing.lg),

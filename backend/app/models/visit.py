@@ -77,6 +77,7 @@ class Visit(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     discussed_products = relationship("VisitDiscussedProduct", back_populates="visit", cascade="all, delete-orphan")
     distributed_products = relationship("VisitProduct", back_populates="visit", cascade="all, delete-orphan")
     follow_ups = relationship("FollowUp", back_populates="visit")
+    promotional_investments = relationship("DoctorPromotionalInvestment", back_populates="visit")
 
 
 class VisitDiscussedProduct(Base):

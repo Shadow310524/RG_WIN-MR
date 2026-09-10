@@ -19,6 +19,7 @@ from app.models.prescription import Prescription
 from app.models.order import Order, OrderItem, OrderStatusEnum
 from app.models.sale import Sale, SaleItem, SaleStatusEnum
 from app.models.expense import Expense, ExpenseCategoryEnum
+from app.models.promotional_investment import DoctorPromotionalInvestment, PromotionalInvestmentTypeEnum
 from app.models.audit_log import AuditLog
 from app.models.sync_operation import SyncOperation, SyncOperationStatusEnum
 
@@ -57,6 +58,8 @@ __all__ = [
     "SaleStatusEnum",
     "Expense",
     "ExpenseCategoryEnum",
+    "DoctorPromotionalInvestment",
+    "PromotionalInvestmentTypeEnum",
     "AuditLog",
     "SyncOperation",
     "SyncOperationStatusEnum",
