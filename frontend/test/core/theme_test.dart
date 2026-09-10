@@ -6,11 +6,12 @@ import 'package:rgwin_crm/core/theme/app_theme.dart';
 
 void main() {
   group('AppTheme & Design Tokens Tests', () {
-    test('Healix Brand Colors are properly defined', () {
-      expect(AppColors.primary, const Color(0xFF0D253F));
-      expect(AppColors.secondary, const Color(0xFF00A896));
-      expect(AppColors.sample, const Color(0xFF0EA5E9));
-      expect(AppColors.paidSale, const Color(0xFF059669));
+    test('Lavender Mobile Brand Colors are properly defined', () {
+      expect(AppColors.primary, const Color(0xFF8B7CF6));
+      expect(AppColors.primaryDark, const Color(0xFF6D5CE7));
+      expect(AppColors.primaryLight, const Color(0xFFEEEAFE));
+      expect(AppColors.background, const Color(0xFFFAF9FD));
+      expect(AppColors.textPrimary, const Color(0xFF202033));
     });
 
     test('Spacing tokens maintain consistent scale', () {
