@@ -36,7 +36,7 @@ class SectionHeader extends StatelessWidget {
                   title,
                   style: const TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
                     letterSpacing: -0.3,
                   ),
@@ -60,26 +60,22 @@ class SectionHeader extends StatelessWidget {
           else if (actionLabel != null && onAction != null)
             SpringButton(
               onTap: onAction,
-              scaleDown: 0.94,
+              scaleDown: 0.95,
               child: Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.sm + 2,
                   vertical: AppSpacing.xs,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.12),
+                  color: AppColors.primaryLight,
                   borderRadius: BorderRadius.circular(AppRadius.full),
-                  border: Border.all(
-                    color: AppColors.primary.withOpacity(0.25),
-                    width: 1,
-                  ),
                 ),
                 child: Text(
                   actionLabel!,
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.primaryGlow,
+                    color: AppColors.primaryDark,
                     letterSpacing: -0.1,
                   ),
                 ),

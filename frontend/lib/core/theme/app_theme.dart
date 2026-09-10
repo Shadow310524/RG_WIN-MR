@@ -6,21 +6,19 @@ import 'package:rgwin_crm/core/theme/app_typography.dart';
 class AppTheme {
   AppTheme._();
 
-  static ThemeData get lightTheme => darkTheme; // Default to God Mode Dark
-
-  static ThemeData get darkTheme {
+  static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.dark,
-      colorScheme: const ColorScheme.dark(
+      brightness: Brightness.light,
+      colorScheme: const ColorScheme.light(
         primary: AppColors.primary,
         onPrimary: AppColors.textOnPrimary,
         primaryContainer: AppColors.primaryLight,
-        onPrimaryContainer: AppColors.primaryGlow,
+        onPrimaryContainer: AppColors.primaryDark,
         secondary: AppColors.secondary,
         onSecondary: AppColors.textOnPrimary,
         secondaryContainer: AppColors.secondaryLight,
-        onSecondaryContainer: AppColors.secondary,
+        onSecondaryContainer: AppColors.secondaryDark,
         surface: AppColors.surface,
         onSurface: AppColors.textPrimary,
         error: AppColors.error,
@@ -43,6 +41,7 @@ class AppTheme {
           color: AppColors.textPrimary,
           letterSpacing: -0.2,
         ),
+        iconTheme: IconThemeData(color: AppColors.textPrimary, size: 22),
       ),
 
       // Card Theme
@@ -59,7 +58,7 @@ class AppTheme {
       // Input Decoration Theme
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.surfaceElevated,
+        fillColor: AppColors.surface,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.lg,
           vertical: AppSpacing.md,
@@ -110,7 +109,7 @@ class AppTheme {
       // OutlinedButton Theme
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.primaryGlow,
+          foregroundColor: AppColors.primaryDark,
           side: const BorderSide(color: AppColors.border, width: 1.2),
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.xl,
@@ -130,7 +129,7 @@ class AppTheme {
         indicatorColor: AppColors.primaryLight,
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return const IconThemeData(color: AppColors.primaryGlow, size: 24);
+            return const IconThemeData(color: AppColors.primaryDark, size: 24);
           }
           return const IconThemeData(color: AppColors.textSecondary, size: 22);
         }),
@@ -139,7 +138,7 @@ class AppTheme {
             return const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: AppColors.primaryGlow,
+              color: AppColors.primaryDark,
             );
           }
           return const TextStyle(
@@ -157,4 +156,6 @@ class AppTheme {
       ),
     );
   }
+
+  static ThemeData get darkTheme => lightTheme;
 }

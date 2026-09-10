@@ -3,7 +3,7 @@ import 'package:rgwin_crm/core/theme/app_colors.dart';
 import 'package:rgwin_crm/core/theme/app_spacing.dart';
 import 'package:rgwin_crm/core/widgets/app_card.dart';
 
-/// God Mode High-Tech KPI Tile with luminous icon badge and telemetry styling.
+/// Clean mobile KPI tile with lavender accent icon and state support.
 class MetricCard extends StatelessWidget {
   final String title;
   final String value;
@@ -28,7 +28,6 @@ class MetricCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppCard(
       onTap: onTap,
-      isGlass: true,
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -43,36 +42,27 @@ class MetricCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 11,
-                    letterSpacing: 0.2,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                    letterSpacing: 0.1,
+                    fontWeight: FontWeight.w600,
                     color: AppColors.textSecondary,
                   ),
                 ),
               ),
               const SizedBox(width: AppSpacing.xs),
               Container(
-                padding: const EdgeInsets.all(6),
+                padding: const EdgeInsets.all(7),
                 decoration: BoxDecoration(
-                  color: accentColor.withOpacity(0.18),
+                  color: accentColor == AppColors.primary
+                      ? AppColors.primaryLight
+                      : accentColor.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(AppRadius.sm),
-                  border: Border.all(
-                    color: accentColor.withOpacity(0.4),
-                    width: 1,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: accentColor.withOpacity(0.2),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
                 ),
                 child: Icon(icon, size: 16, color: accentColor),
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: AppSpacing.md),
           Text(
             isUnavailable ? "Insufficient data" : value,
             maxLines: 1,

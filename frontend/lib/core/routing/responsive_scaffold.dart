@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rgwin_crm/core/theme/app_colors.dart';
@@ -20,7 +19,8 @@ class NavigationItem {
   });
 }
 
-/// God Mode Responsive Scaffold with Floating Frosted Glass Dock and Tactile Physics.
+/// Mobile-First Responsive Scaffold designed for physical Android device usage
+/// with clean light lavender styling and 5-tab bottom navigation.
 class ResponsiveScaffold extends ConsumerWidget {
   final Widget body;
   final int currentIndex;
@@ -53,12 +53,8 @@ class ResponsiveScaffold extends ConsumerWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: AppColors.primaryLight.withOpacity(0.6),
+              color: AppColors.primaryLight,
               borderRadius: BorderRadius.circular(AppRadius.full),
-              border: Border.all(
-                color: AppColors.primaryGlow.withOpacity(0.3),
-                width: 1,
-              ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -66,15 +62,9 @@ class ResponsiveScaffold extends ConsumerWidget {
                 Container(
                   width: 6,
                   height: 6,
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     color: AppColors.success,
                     shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.success.withOpacity(0.8),
-                        blurRadius: 4,
-                      ),
-                    ],
                   ),
                 ),
                 const SizedBox(width: 6),
@@ -82,9 +72,9 @@ class ResponsiveScaffold extends ConsumerWidget {
                   authState.user!.role.toUpperCase(),
                   style: const TextStyle(
                     fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                    letterSpacing: 0.5,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primaryDark,
+                    letterSpacing: 0.3,
                   ),
                 ),
               ],
@@ -113,25 +103,17 @@ class ResponsiveScaffold extends ConsumerWidget {
 
         final scaffoldContent = Scaffold(
           backgroundColor: AppColors.background,
-          extendBody: true, // Allows content behind the floating glass dock
           appBar: AppBar(
-            backgroundColor: AppColors.background.withOpacity(0.9),
+            backgroundColor: AppColors.background,
             elevation: 0,
             title: Row(
               children: [
                 Container(
-                  width: 34,
-                  height: 34,
+                  width: 32,
+                  height: 32,
                   decoration: BoxDecoration(
                     gradient: AppColors.primaryGradient,
                     borderRadius: BorderRadius.circular(AppRadius.sm),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withOpacity(0.4),
-                        blurRadius: 10,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
                   ),
                   child: const Center(
                     child: Text(
@@ -139,7 +121,7 @@ class ResponsiveScaffold extends ConsumerWidget {
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w900,
-                        fontSize: 14,
+                        fontSize: 13,
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -150,9 +132,9 @@ class ResponsiveScaffold extends ConsumerWidget {
                   title ?? items[currentIndex].label,
                   style: const TextStyle(
                     fontSize: 18,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
-                    letterSpacing: -0.3,
+                    letterSpacing: -0.2,
                   ),
                 ),
               ],
@@ -161,7 +143,7 @@ class ResponsiveScaffold extends ConsumerWidget {
           ),
           body: body,
           floatingActionButton: floatingActionButton,
-          bottomNavigationBar: _FloatingGlassDock(
+          bottomNavigationBar: _MobileBottomNav(
             currentIndex: currentIndex,
             items: items,
             onSelected: onNavigationIndexChanged,
@@ -169,23 +151,19 @@ class ResponsiveScaffold extends ConsumerWidget {
         );
 
         if (isWideScreen) {
-          // On desktop/Chrome, center the mobile viewport in a sleek luxury frame
+          // On desktop/Chrome web testing, center within standard mobile dimensions
           return Scaffold(
-            backgroundColor: const Color(0xFF06040C),
+            backgroundColor: const Color(0xFFF0EFF6),
             body: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: kMaxMobileWidth),
                 child: Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: AppColors.borderHighlight.withOpacity(0.08),
-                      width: 1,
-                    ),
+                  decoration: const BoxDecoration(
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.6),
-                        blurRadius: 36,
-                        offset: const Offset(0, 8),
+                        color: Color(0x18000000),
+                        blurRadius: 24,
+                        offset: Offset(0, 4),
                       ),
                     ],
                   ),
@@ -202,13 +180,13 @@ class ResponsiveScaffold extends ConsumerWidget {
   }
 }
 
-/// Floating Island Glass Dock with smooth active indicator and tactile tap springs.
-class _FloatingGlassDock extends StatelessWidget {
+/// Clean, high-performance mobile bottom navigation bar with soft lavender active states.
+class _MobileBottomNav extends StatelessWidget {
   final int currentIndex;
   final List<NavigationItem> items;
   final ValueChanged<int> onSelected;
 
-  const _FloatingGlassDock({
+  const _MobileBottomNav({
     required this.currentIndex,
     required this.items,
     required this.onSelected,
@@ -216,102 +194,77 @@ class _FloatingGlassDock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(28),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-            child: Container(
-              height: 66,
-              decoration: BoxDecoration(
-                color: AppColors.surfaceElevated.withOpacity(0.85),
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(
-                  color: AppColors.borderHighlight.withOpacity(0.18),
-                  width: 1.2,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.4),
-                    blurRadius: 24,
-                    offset: const Offset(0, 8),
-                  ),
-                  BoxShadow(
-                    color: AppColors.primaryGlow.withOpacity(0.06),
-                    blurRadius: 20,
-                    offset: const Offset(0, -2),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: List.generate(items.length, (index) {
-                  final isSelected = index == currentIndex;
-                  final item = items[index];
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        border: Border(top: BorderSide(color: AppColors.border, width: 1.0)),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x06202033),
+            blurRadius: 8,
+            offset: Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: SizedBox(
+          height: 60,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(items.length, (index) {
+              final item = items[index];
+              final isSelected = currentIndex == index;
 
-                  return Expanded(
-                    child: SpringButton(
-                      scaleDown: 0.90,
-                      onTap: () => onSelected(index),
-                      child: Container(
-                        color: Colors.transparent,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              curve: Curves.easeOutCubic,
-                              padding: EdgeInsets.symmetric(
-                                horizontal: isSelected ? 12 : 6,
-                                vertical: isSelected ? 5 : 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? AppColors.primary.withOpacity(0.18)
-                                    : Colors.transparent,
-                                borderRadius: BorderRadius.circular(16),
-                                border: isSelected
-                                    ? Border.all(
-                                        color: AppColors.primaryGlow
-                                            .withOpacity(0.4),
-                                        width: 1,
-                                      )
-                                    : null,
-                              ),
-                              child: Icon(
-                                isSelected ? item.selectedIcon : item.icon,
-                                size: isSelected ? 22 : 21,
-                                color: isSelected
-                                    ? AppColors.primaryGlow
-                                    : AppColors.textSecondary,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            AnimatedDefaultTextStyle(
-                              duration: const Duration(milliseconds: 200),
-                              curve: Curves.easeOutCubic,
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: isSelected
-                                    ? FontWeight.w800
-                                    : FontWeight.w500,
-                                color: isSelected
-                                    ? AppColors.textPrimary
-                                    : AppColors.textMuted,
-                                letterSpacing: -0.1,
-                              ),
-                              child: Text(item.label),
-                            ),
-                          ],
+              return Expanded(
+                child: SpringButton(
+                  onTap: () => onSelected(index),
+                  scaleDown: 0.94,
+                  child: Container(
+                    color: Colors.transparent,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          curve: Curves.easeOutCubic,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? AppColors.primaryLight
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(AppRadius.full),
+                          ),
+                          child: Icon(
+                            isSelected ? item.selectedIcon : item.icon,
+                            size: 22,
+                            color: isSelected
+                                ? AppColors.primaryDark
+                                : AppColors.textMuted,
+                          ),
                         ),
-                      ),
+                        const SizedBox(height: 2),
+                        Text(
+                          item.label,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: isSelected
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                            color: isSelected
+                                ? AppColors.primaryDark
+                                : AppColors.textMuted,
+                            letterSpacing: -0.1,
+                          ),
+                        ),
+                      ],
                     ),
-                  );
-                }),
-              ),
-            ),
+                  ),
+                ),
+              );
+            }),
           ),
         ),
       ),

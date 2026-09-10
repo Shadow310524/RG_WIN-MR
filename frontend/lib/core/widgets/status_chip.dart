@@ -4,7 +4,7 @@ import 'package:rgwin_crm/core/theme/app_spacing.dart';
 
 enum StatusChipVariant { success, warning, error, info, neutral }
 
-/// Translucent Neon Status Pill with glowing beacon dot indicator.
+/// Clean semantic status chip with soft background and clear typography.
 class StatusChip extends StatelessWidget {
   final String label;
   final StatusChipVariant variant;
@@ -62,11 +62,11 @@ class StatusChip extends StatelessWidget {
         fg = AppColors.error;
         break;
       case StatusChipVariant.info:
-        bg = AppColors.infoLight;
-        fg = AppColors.info;
+        bg = AppColors.primaryLight;
+        fg = AppColors.primaryDark;
         break;
       case StatusChipVariant.neutral:
-        bg = AppColors.surfaceElevated;
+        bg = AppColors.primaryVeryLight;
         fg = AppColors.textSecondary;
         break;
     }
@@ -77,16 +77,9 @@ class StatusChip extends StatelessWidget {
         vertical: AppSpacing.xs,
       ),
       decoration: BoxDecoration(
-        color: bg.withOpacity(0.35),
+        color: bg,
         borderRadius: BorderRadius.circular(AppRadius.full),
-        border: Border.all(color: fg.withOpacity(0.35), width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: fg.withOpacity(0.12),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: fg.withOpacity(0.2), width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -98,17 +91,7 @@ class StatusChip extends StatelessWidget {
             Container(
               width: 6,
               height: 6,
-              decoration: BoxDecoration(
-                color: fg,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: fg.withOpacity(0.8),
-                    blurRadius: 5,
-                    spreadRadius: 1,
-                  ),
-                ],
-              ),
+              decoration: BoxDecoration(color: fg, shape: BoxShape.circle),
             ),
             const SizedBox(width: AppSpacing.xs),
           ],
@@ -116,9 +99,9 @@ class StatusChip extends StatelessWidget {
             label,
             style: TextStyle(
               fontSize: 11,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w600,
               color: fg,
-              letterSpacing: 0.2,
+              letterSpacing: 0.1,
             ),
           ),
         ],

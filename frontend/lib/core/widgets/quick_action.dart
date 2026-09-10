@@ -3,7 +3,7 @@ import 'package:rgwin_crm/core/theme/app_colors.dart';
 import 'package:rgwin_crm/core/theme/app_spacing.dart';
 import 'package:rgwin_crm/core/widgets/spring_button.dart';
 
-/// Bento Quick Action Applet Tile with tactile spring physics and radiant glow.
+/// Clean, one-handed mobile quick action button with soft lavender styling.
 class QuickActionItem extends StatelessWidget {
   final String label;
   final IconData icon;
@@ -22,7 +22,7 @@ class QuickActionItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveColor = color ?? AppColors.primaryGlow;
+    final effectiveColor = color ?? AppColors.primaryDark;
     final effectiveBg = backgroundColor ?? AppColors.primaryLight;
 
     return Semantics(
@@ -30,7 +30,7 @@ class QuickActionItem extends StatelessWidget {
       label: label,
       child: SpringButton(
         onTap: onTap,
-        scaleDown: 0.93,
+        scaleDown: 0.94,
         child: Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.xs,
@@ -43,17 +43,14 @@ class QuickActionItem extends StatelessWidget {
                 width: 52,
                 height: 52,
                 decoration: BoxDecoration(
-                  color: effectiveBg.withOpacity(0.45),
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                  border: Border.all(
-                    color: effectiveColor.withOpacity(0.4),
-                    width: 1.2,
-                  ),
-                  boxShadow: [
+                  color: effectiveBg,
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  border: Border.all(color: AppColors.border, width: 1.0),
+                  boxShadow: const [
                     BoxShadow(
-                      color: effectiveColor.withOpacity(0.22),
-                      blurRadius: 14,
-                      offset: const Offset(0, 4),
+                      color: Color(0x0A202033),
+                      blurRadius: 6,
+                      offset: Offset(0, 2),
                     ),
                   ],
                 ),

@@ -6,12 +6,12 @@ import 'package:rgwin_crm/core/theme/app_theme.dart';
 
 void main() {
   group('AppTheme & Design Tokens Tests', () {
-    test('God Mode Brand Colors are properly defined', () {
-      expect(AppColors.primary, const Color(0xFF8B5CF6));
-      expect(AppColors.primaryDark, const Color(0xFF6D28D9));
-      expect(AppColors.primaryLight, const Color(0xFF2A1F4E));
-      expect(AppColors.background, const Color(0xFF090614));
-      expect(AppColors.textPrimary, const Color(0xFFF8FAFC));
+    test('Lavender Brand Colors are properly defined', () {
+      expect(AppColors.primary, const Color(0xFF8B7CF6));
+      expect(AppColors.primaryDark, const Color(0xFF6D5CE7));
+      expect(AppColors.primaryLight, const Color(0xFFEEEAFE));
+      expect(AppColors.background, const Color(0xFFFAF9FD));
+      expect(AppColors.textPrimary, const Color(0xFF202033));
     });
 
     test('Spacing tokens maintain consistent scale', () {

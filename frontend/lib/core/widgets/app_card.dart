@@ -3,7 +3,7 @@ import 'package:rgwin_crm/core/theme/app_colors.dart';
 import 'package:rgwin_crm/core/theme/app_spacing.dart';
 import 'package:rgwin_crm/core/widgets/spring_button.dart';
 
-/// Luxury Obsidian & Glassmorphic Container Card with optional tactile spring physics.
+/// Clean, professional light lavender card container with subtle borders and soft shadows.
 class AppCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
@@ -36,38 +36,20 @@ class AppCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: gradient == null
             ? (backgroundColor ??
-                  (isGlass ? AppColors.surfaceElevated : AppColors.surface))
+                  (isGlass ? AppColors.surfaceVariant : AppColors.surface))
             : null,
         gradient: gradient,
         borderRadius: BorderRadius.circular(radius),
-        border: Border.all(
-          color:
-              borderColor ??
-              (isGlass ? AppColors.borderHighlight : AppColors.border),
-          width: isGlass ? 1.2 : 1.0,
-        ),
+        border: Border.all(color: borderColor ?? AppColors.border, width: 1.0),
         boxShadow:
             boxShadow ??
-            (isGlass
-                ? [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.35),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                    ),
-                    BoxShadow(
-                      color: AppColors.primaryGlow.withOpacity(0.04),
-                      blurRadius: 20,
-                      offset: const Offset(0, -2),
-                    ),
-                  ]
-                : [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.20),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ]),
+            const [
+              BoxShadow(
+                color: Color(0x08202033),
+                blurRadius: 10,
+                offset: Offset(0, 2),
+              ),
+            ],
       ),
       child: Material(
         color: Colors.transparent,
@@ -75,8 +57,8 @@ class AppCard extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
-          splashColor: AppColors.primaryGlow.withOpacity(0.12),
-          highlightColor: AppColors.primaryGlow.withOpacity(0.06),
+          splashColor: AppColors.primaryLight,
+          highlightColor: AppColors.primaryVeryLight,
           child: Padding(
             padding: padding ?? const EdgeInsets.all(AppSpacing.lg),
             child: child,
@@ -86,7 +68,7 @@ class AppCard extends StatelessWidget {
     );
 
     if (onTap != null) {
-      return SpringButton(onTap: onTap, scaleDown: 0.97, child: cardBody);
+      return SpringButton(onTap: onTap, scaleDown: 0.98, child: cardBody);
     }
 
     return cardBody;
