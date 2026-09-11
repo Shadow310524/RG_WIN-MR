@@ -172,8 +172,15 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen>
                 _buildExecutiveHeader(fullName, authState.user?.role),
                 const SizedBox(height: AppSpacing.md),
 
-                // 2. Period Selector (Today | This Week | This Month)
+                // 2. Stitch Period Selector (Today | This Week | This Month)
                 _buildPeriodSelector(),
+                const SizedBox(height: AppSpacing.md),
+
+                // 2b. Stitch Hero Business Value Card
+                _buildHeroBusinessCard(
+                  periodPurchaseAmount,
+                  periodPurchases.length,
+                ),
                 const SizedBox(height: AppSpacing.lg),
 
                 // 3. 4-KPI Overview Grid (Visits, Purchases, Follow-ups, Doctors)
@@ -215,8 +222,8 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen>
     final hasName = fullName != null && fullName.trim().isNotEmpty;
     final firstName = hasName ? fullName.trim().split(' ').first : null;
     final greetingTitle = hasName
-        ? "${_getGreeting()}, $firstName 👋"
-        : "${_getGreeting()} 👋";
+        ? "${_getGreeting()}, $firstName"
+        : _getGreeting();
     final greetingSubtitle = hasName
         ? "Field Sales Overview"
         : "Here's your field summary";
@@ -233,7 +240,7 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen>
                 color: AppColors.successLight,
                 borderRadius: BorderRadius.circular(AppRadius.full),
                 border: Border.all(
-                  color: AppColors.success.withOpacity(0.3),
+                  color: AppColors.success.withOpacity(0.25),
                   width: 1,
                 ),
               ),
@@ -250,7 +257,7 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen>
                   ),
                   const SizedBox(width: 5),
                   const Text(
-                    "Online & Synced",
+                    "Live Synced • Offline Ready",
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
@@ -275,22 +282,23 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen>
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(12),
               child: Image.asset(
                 'assets/images/logo.png',
-                width: 44,
-                height: 44,
+                width: 46,
+                height: 46,
                 fit: BoxFit.contain,
                 errorBuilder: (context, error, stackTrace) => Container(
-                  width: 44,
-                  height: 44,
+                  width: 46,
+                  height: 46,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
+                    color: AppColors.primaryLight,
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
                     Icons.shield_outlined,
                     color: AppColors.primary,
+                    size: 24,
                   ),
                 ),
               ),
@@ -300,20 +308,30 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    greetingTitle,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
-                      letterSpacing: -0.5,
-                    ),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          greetingTitle,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
+                            letterSpacing: -0.5,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Text("✨", style: TextStyle(fontSize: 18)),
+                    ],
                   ),
                   const SizedBox(height: 2),
                   Text(
                     greetingSubtitle,
                     style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: 12,
                       color: AppColors.textSecondary,
                       fontWeight: FontWeight.w500,
                     ),
@@ -333,9 +351,8 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen>
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(color: AppColors.border),
+        color: AppColors.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
         children: periods.map((period) {
@@ -343,36 +360,258 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen>
           return Expanded(
             child: SpringButton(
               onTap: () => setState(() => _selectedPeriod = period),
-              scaleDown: 0.95,
+              scaleDown: 0.96,
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
                 curve: Curves.easeOutCubic,
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 decoration: BoxDecoration(
-                  color: isSelected
-                      ? AppColors.primaryLight
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                  color: isSelected ? AppColors.primary : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: AppColors.primary.withOpacity(0.25),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
                 ),
-                child: Center(
-                  child: Text(
-                    period,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: isSelected
-                          ? FontWeight.w700
-                          : FontWeight.w500,
-                      color: isSelected
-                          ? AppColors.primaryDark
-                          : AppColors.textSecondary,
-                      letterSpacing: -0.1,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      period,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: isSelected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                        color: isSelected
+                            ? Colors.white
+                            : AppColors.textSecondary,
+                        letterSpacing: -0.1,
+                      ),
                     ),
-                  ),
+                    if (isSelected) ...[
+                      const SizedBox(width: 5),
+                      Container(
+                        width: 5,
+                        height: 5,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
             ),
           );
         }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildHeroBusinessCard(double amount, int orderCount) {
+    final currencyFormatter = NumberFormat.currency(
+      locale: 'en_IN',
+      symbol: '',
+      decimalDigits: 0,
+    );
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        children: [
+          Positioned(
+            top: -24,
+            right: -24,
+            child: Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    AppColors.primaryLight.withOpacity(0.7),
+                    AppColors.primaryLight.withOpacity(0.0),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Row(
+                          children: [
+                            Text(
+                              "BUSINESS VALUE",
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.8,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Icon(
+                              Icons.verified_rounded,
+                              size: 14,
+                              color: AppColors.primary,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                          textBaseline: TextBaseline.alphabetic,
+                          children: [
+                            const Text(
+                              "₹",
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                            const SizedBox(width: 3),
+                            Text(
+                              currencyFormatter.format(amount),
+                              style: const TextStyle(
+                                fontSize: 26,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.5,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryLight,
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                        border: Border.all(
+                          color: AppColors.primary.withOpacity(0.15),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.receipt_long_outlined,
+                            size: 14,
+                            color: AppColors.primaryDark,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            "$orderCount Orders",
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primaryDark,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceContainerLow,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              "Recorded purchases",
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.textSecondary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            "Sum of field entries",
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline,
+                            size: 13,
+                            color: AppColors.outline,
+                          ),
+                          SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              "Strictly field-recorded purchases; does not reflect secondary accounting settlements.",
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: AppColors.outline,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

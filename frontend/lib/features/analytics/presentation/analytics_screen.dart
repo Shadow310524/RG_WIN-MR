@@ -100,9 +100,11 @@ class AnalyticsScreen extends ConsumerWidget {
                           "Authoritative realized business vs promotional spend",
                     ),
                     const SizedBox(height: AppSpacing.xs),
-                    if (summary != null)
-                      _BusinessOverviewCard(summary: summary)
-                    else
+                    if (summary != null) ...[
+                      _BusinessOverviewCard(summary: summary),
+                      const SizedBox(height: AppSpacing.lg),
+                      _ValueVsInvestmentCard(summary: summary),
+                    ] else
                       const AppCard(
                         child: Text("No commercial data available."),
                       ),
@@ -661,9 +663,8 @@ class _PeriodSelector extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(color: AppColors.border),
+        color: AppColors.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
         children: periods.map((p) {
@@ -672,19 +673,27 @@ class _PeriodSelector extends StatelessWidget {
             child: GestureDetector(
               onTap: () => onSelected(p["id"]!),
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOutCubic,
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 decoration: BoxDecoration(
-                  color: isSelected
-                      ? AppColors.primaryDark
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                  color: isSelected ? AppColors.primary : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: AppColors.primary.withOpacity(0.25),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
                 ),
                 child: Center(
                   child: Text(
                     p["label"]!,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 11.5,
                       fontWeight: isSelected
                           ? FontWeight.w700
                           : FontWeight.w600,
@@ -859,6 +868,232 @@ class _BusinessOverviewCard extends StatelessWidget {
   }
 }
 
+class _ValueVsInvestmentCard extends StatelessWidget {
+  final OverallCommercialSummaryModel summary;
+
+  const _ValueVsInvestmentCard({required this.summary});
+
+  @override
+  Widget build(BuildContext context) {
+    final total = summary.businessValue + summary.promotionalInvestment;
+    final purchasePct = total > 0 ? (summary.businessValue / total) : 0.0;
+    final promoPct = total > 0 ? (summary.promotionalInvestment / total) : 0.0;
+
+    final purchasePctStr = (purchasePct * 100).toStringAsFixed(1);
+    final promoPctStr = (promoPct * 100).toStringAsFixed(1);
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Value vs Investment Allocation",
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      "Recorded Field Value vs Dedicated Promotional Inputs",
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: const BoxDecoration(
+                  color: AppColors.surfaceContainer,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.compare_arrows_rounded,
+                  size: 16,
+                  color: AppColors.primary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          // Field Purchase Volume Bar
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: AppColors.primary,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        const Flexible(
+                          child: Text(
+                            "Field Purchase Volume",
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    "₹${NumberFormat('#,##,###.00').format(summary.businessValue)} ($purchasePctStr%)",
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: LinearProgressIndicator(
+                  value: purchasePct.clamp(0.0, 1.0),
+                  backgroundColor: AppColors.surfaceContainer,
+                  valueColor: const AlwaysStoppedAnimation<Color>(
+                    AppColors.primary,
+                  ),
+                  minHeight: 10,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          // Doctor Promo Allocation Bar
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: AppColors.secondaryContainer,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        const Flexible(
+                          child: Text(
+                            "Doctor Promo Allocation",
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    "₹${NumberFormat('#,##,###.00').format(summary.promotionalInvestment)} ($promoPctStr%)",
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: LinearProgressIndicator(
+                  value: promoPct.clamp(0.0, 1.0),
+                  backgroundColor: AppColors.surfaceContainer,
+                  valueColor: const AlwaysStoppedAnimation<Color>(
+                    AppColors.secondaryContainer,
+                  ),
+                  minHeight: 10,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceContainer,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.verified_outlined,
+                  size: 15,
+                  color: AppColors.primary,
+                ),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    "Field Governance Rule: Commercial returns remain provisional. Do not calculate localized ROI without authoritative backend formula & supply-chain confirmation.",
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textSecondary,
+                      height: 1.35,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _ResponseDistributionCard extends StatelessWidget {
   final Map<String, int> distribution;
 
@@ -890,6 +1125,25 @@ class _ResponseDistributionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (total > 0) ...[
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: SizedBox(
+                height: 10,
+                child: Row(
+                  children: distribution.entries.map((entry) {
+                    final flex = (entry.value * 1000 ~/ total);
+                    if (flex <= 0) return const SizedBox.shrink();
+                    return Expanded(
+                      flex: flex,
+                      child: Container(color: _getResponseColor(entry.key)),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+          ],
           Wrap(
             spacing: 8,
             runSpacing: 8,

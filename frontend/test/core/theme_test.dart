@@ -7,11 +7,11 @@ import 'package:rgwin_crm/core/theme/app_theme.dart';
 void main() {
   group('AppTheme & Design Tokens Tests', () {
     test('Lavender Brand Colors are properly defined', () {
-      expect(AppColors.primary, const Color(0xFF8B7CF6));
-      expect(AppColors.primaryDark, const Color(0xFF6D5CE7));
-      expect(AppColors.primaryLight, const Color(0xFFEEEAFE));
-      expect(AppColors.background, const Color(0xFFFAF9FD));
-      expect(AppColors.textPrimary, const Color(0xFF202033));
+      expect(AppColors.primary, const Color(0xFF5949C0));
+      expect(AppColors.primaryDark, const Color(0xFF4330AA));
+      expect(AppColors.primaryLight, const Color(0xFFE5DEFF));
+      expect(AppColors.background, const Color(0xFFFCF8FF));
+      expect(AppColors.textPrimary, const Color(0xFF1A1A2C));
     });
 
     test('Spacing tokens maintain consistent scale', () {
