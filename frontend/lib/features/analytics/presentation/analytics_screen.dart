@@ -62,7 +62,18 @@ class AnalyticsScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 1. Period Selector Chips
+                    // 1. Offline Cache Notice Banner
+                    if (state.isCached) ...[
+                      _CacheNoticeBanner(
+                        lastUpdated: state.lastUpdated,
+                        onRefresh: () => ref
+                            .read(analyticsControllerProvider.notifier)
+                            .loadAnalytics(),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                    ],
+
+                    // 2. Period Selector Chips
                     _PeriodSelector(
                       currentPeriod: state.period,
                       onSelected: (p) => ref
@@ -71,7 +82,18 @@ class AnalyticsScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: AppSpacing.lg),
 
-                    // 2. Executive Business Overview
+                    // 3. Field Activity Overview (Visits, Purchases, Followups)
+                    if (summary != null) ...[
+                      const SectionHeader(
+                        title: "Field Activity Summary",
+                        subtitle: "Coverage and execution across territory",
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      _FieldActivityCard(summary: summary),
+                      const SizedBox(height: AppSpacing.lg),
+                    ],
+
+                    // 4. Executive Business Overview (Macro Financials)
                     const SectionHeader(
                       title: "Business Overview",
                       subtitle:
@@ -86,13 +108,53 @@ class AnalyticsScreen extends ConsumerWidget {
                       ),
                     const SizedBox(height: AppSpacing.md),
 
-                    // 3. Provenance & Attribution Banner
+                    // 5. Doctor Response Distribution
+                    if (summary != null &&
+                        summary.responseDistribution.isNotEmpty) ...[
+                      const SectionHeader(
+                        title: "Doctor Response Breakdown",
+                        subtitle: "Reception from recent field interactions",
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      _ResponseDistributionCard(
+                        distribution: summary.responseDistribution,
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                    ],
+
+                    // 6. Promotional Spend by Category
+                    if (summary != null &&
+                        summary.categoryInvestments.isNotEmpty) ...[
+                      const SectionHeader(
+                        title: "Promotional Spend by Category",
+                        subtitle: "Doctor-specific investment allocation",
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      _CategoryInvestmentsCard(
+                        investments: summary.categoryInvestments,
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                    ],
+
+                    // 7. Time Trends (4-Week Progression)
+                    if (summary != null && summary.trends.isNotEmpty) ...[
+                      const SectionHeader(
+                        title: "4-Week Territory Trend",
+                        subtitle:
+                            "Weekly activity, purchases, and promotional spend",
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      _TimeTrendsCard(trends: summary.trends),
+                      const SizedBox(height: AppSpacing.lg),
+                    ],
+
+                    // 8. Provenance & Attribution Banner
                     _ProvenanceBanner(
                       onTap: () => _showProvenanceInfo(context),
                     ),
                     const SizedBox(height: AppSpacing.lg),
 
-                    // 4. Area Performance (Derived purely from assigned doctors)
+                    // 9. Area Performance
                     SectionHeader(
                       title: "Area Performance",
                       subtitle: "Commercial rollups with doctor drill-down",
@@ -128,50 +190,106 @@ class AnalyticsScreen extends ConsumerWidget {
                       ),
                     const SizedBox(height: AppSpacing.lg),
 
-                    // 5. Doctor Performance (Top Contributors)
-                    const SectionHeader(
-                      title: "Doctor Performance",
-                      subtitle:
-                          "Top contributing doctors ranked by business value",
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    if (summary == null || summary.topDoctors.isEmpty)
-                      const AppCard(
-                        child: Padding(
-                          padding: EdgeInsets.all(AppSpacing.md),
-                          child: Center(
-                            child: Text(
-                              "No doctor purchase activity in this period.",
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: AppColors.textSecondary,
+                    // 10. Doctor Commercial Intelligence & Comparison
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const Expanded(
+                          child: SectionHeader(
+                            title: "Doctor Performance",
+                            subtitle:
+                                "Top contributing doctors ranked by business value",
+                          ),
+                        ),
+                        InkWell(
+                          onTap: () => ref
+                              .read(analyticsControllerProvider.notifier)
+                              .toggleSort(),
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryLight,
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
                               ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  state.sortByPromoSpend
+                                      ? Icons.sort_by_alpha
+                                      : Icons.trending_up,
+                                  size: 14,
+                                  color: AppColors.primaryDark,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  state.sortByPromoSpend
+                                      ? "Sort: Promo Spend"
+                                      : "Sort: Business Val",
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.primaryDark,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
-                      )
-                    else
-                      AppCard(
-                        child: Column(
-                          children: summary.topDoctors.asMap().entries.map((
-                            entry,
-                          ) {
-                            final idx = entry.key;
-                            final doc = entry.value;
-                            return _DoctorRankRow(
-                              rank: idx + 1,
-                              doctor: doc,
-                              onTap: () =>
-                                  context.push('/doctors/${doc.doctorId}'),
-                            );
-                          }).toList(),
-                        ),
-                      ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    _buildDoctorList(context, summary, state.sortByPromoSpend),
                     const SizedBox(height: AppSpacing.xxl),
                   ],
                 ),
               ),
             ),
+    );
+  }
+
+  Widget _buildDoctorList(
+    BuildContext context,
+    OverallCommercialSummaryModel? summary,
+    bool sortByPromoSpend,
+  ) {
+    if (summary == null || summary.topDoctors.isEmpty) {
+      return const AppCard(
+        child: Padding(
+          padding: EdgeInsets.all(AppSpacing.md),
+          child: Center(
+            child: Text(
+              "No doctor activity recorded for this period.",
+              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+            ),
+          ),
+        ),
+      );
+    }
+
+    final doctors = sortByPromoSpend && summary.highPromoDoctors.isNotEmpty
+        ? summary.highPromoDoctors
+        : summary.topDoctors;
+
+    return AppCard(
+      child: Column(
+        children: doctors.asMap().entries.map((entry) {
+          final idx = entry.key;
+          final doc = entry.value;
+          return _DoctorRankRow(
+            rank: idx + 1,
+            doctor: doc,
+            onTap: () => context.push('/doctors/${doc.doctorId}'),
+          );
+        }).toList(),
+      ),
     );
   }
 
@@ -223,28 +341,28 @@ class AnalyticsScreen extends ConsumerWidget {
               style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
             ),
             const SizedBox(height: AppSpacing.md),
-            _ProvenanceItem(
+            const _ProvenanceItem(
               title: "Business Value",
               source: "Realized Purchases",
               desc:
                   "Direct sum of commercial purchases recorded in field sales workflow.",
               color: AppColors.success,
             ),
-            _ProvenanceItem(
+            const _ProvenanceItem(
               title: "Promotional Investment",
               source: "Explicit Doctor Spend",
               desc:
                   "Attributable cost of samples, promotional units, and free supplies specifically entered.",
               color: AppColors.primaryDark,
             ),
-            _ProvenanceItem(
+            const _ProvenanceItem(
               title: "Revenue / Margin",
               source: "Revenue unavailable",
               desc:
                   "Pending authoritative price-to-stockist (PTS) formula and Healix product margin tables.",
               color: AppColors.warning,
             ),
-            _ProvenanceItem(
+            const _ProvenanceItem(
               title: "General Expenses",
               source: "Operating Expenses (Excluded)",
               desc:
@@ -306,7 +424,7 @@ class AnalyticsScreen extends ConsumerWidget {
                           ),
                         ),
                         Text(
-                          "Area Code: ${area.areaCode} • ${area.doctorCount} Enrolled Doctors",
+                          "Code: ${area.areaCode} • ${area.doctorCount} Doctors • Avg Order: ₹${NumberFormat('#,##,###.00').format(area.avgPurchaseValue)}",
                           style: const TextStyle(
                             fontSize: 12,
                             color: AppColors.textSecondary,
@@ -420,16 +538,9 @@ class AnalyticsScreen extends ConsumerWidget {
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                         ),
-                                        Row(
-                                          children: [
-                                            Text(
-                                              "Promo Spend: ₹${NumberFormat('#,##,###.00').format(doc.promotionalInvestment)}",
-                                              style: const TextStyle(
-                                                fontSize: 10,
-                                                color: AppColors.textSecondary,
-                                              ),
-                                            ),
-                                          ],
+                                        const SizedBox(height: 2),
+                                        _AttentionSignalsRow(
+                                          signals: doc.attentionSignals,
                                         ),
                                       ],
                                     ),
@@ -445,12 +556,11 @@ class AnalyticsScreen extends ConsumerWidget {
                                           color: AppColors.textPrimary,
                                         ),
                                       ),
-                                      const Text(
-                                        "View Profile →",
-                                        style: TextStyle(
+                                      Text(
+                                        "Promo: ₹${NumberFormat('#,##,###.00').format(doc.promotionalInvestment)}",
+                                        style: const TextStyle(
                                           fontSize: 10,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppColors.primary,
+                                          color: AppColors.textSecondary,
                                         ),
                                       ),
                                     ],
@@ -465,6 +575,66 @@ class AnalyticsScreen extends ConsumerWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _CacheNoticeBanner extends StatelessWidget {
+  final DateTime? lastUpdated;
+  final VoidCallback onRefresh;
+
+  const _CacheNoticeBanner({
+    required this.lastUpdated,
+    required this.onRefresh,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final timeStr = lastUpdated != null
+        ? DateFormat('jm').format(lastUpdated!)
+        : "recently";
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF8E1), // Warm amber tint
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: const Color(0xFFFFE082)),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.cloud_off_rounded,
+            size: 16,
+            color: Color(0xFFF57F17),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              "Showing cached data • Last updated $timeStr",
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF5D4037),
+              ),
+            ),
+          ),
+          InkWell(
+            onTap: onRefresh,
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              child: Text(
+                "Refresh",
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -533,6 +703,97 @@ class _PeriodSelector extends StatelessWidget {
   }
 }
 
+class _FieldActivityCard extends StatelessWidget {
+  final OverallCommercialSummaryModel summary;
+
+  const _FieldActivityCard({required this.summary});
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      child: Row(
+        children: [
+          Expanded(
+            child: _ActivityStat(
+              icon: Icons.person_pin_outlined,
+              label: "Doctors",
+              value: "${summary.fieldActivity.totalDoctors}",
+              color: AppColors.primary,
+            ),
+          ),
+          Container(width: 1, height: 36, color: AppColors.border),
+          Expanded(
+            child: _ActivityStat(
+              icon: Icons.directions_walk_outlined,
+              label: "Visits",
+              value: "${summary.fieldActivity.totalVisits}",
+              color: AppColors.primaryDark,
+            ),
+          ),
+          Container(width: 1, height: 36, color: AppColors.border),
+          Expanded(
+            child: _ActivityStat(
+              icon: Icons.shopping_bag_outlined,
+              label: "Purchases",
+              value: "${summary.fieldActivity.totalPurchases}",
+              color: AppColors.success,
+            ),
+          ),
+          Container(width: 1, height: 36, color: AppColors.border),
+          Expanded(
+            child: _ActivityStat(
+              icon: Icons.assignment_late_outlined,
+              label: "Follow-ups",
+              value: "${summary.fieldActivity.pendingFollowups}",
+              color: AppColors.warning,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActivityStat extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+
+  const _ActivityStat({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Icon(icon, size: 18, color: color),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w500,
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _BusinessOverviewCard extends StatelessWidget {
   final OverallCommercialSummaryModel summary;
 
@@ -563,7 +824,7 @@ class _BusinessOverviewCard extends StatelessWidget {
                       "₹${NumberFormat('#,##,###.00').format(summary.promotionalInvestment)}",
                   icon: Icons.inventory_2_outlined,
                   accentColor: AppColors.primaryDark,
-                  subtitle: "Doctor-specific samples/units",
+                  subtitle: "Attributable samples & units",
                 ),
               ),
             ],
@@ -593,6 +854,210 @@ class _BusinessOverviewCard extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ResponseDistributionCard extends StatelessWidget {
+  final Map<String, int> distribution;
+
+  const _ResponseDistributionCard({required this.distribution});
+
+  Color _getResponseColor(String key) {
+    switch (key.toUpperCase()) {
+      case 'PRESCRIBING':
+        return AppColors.success;
+      case 'POSITIVE':
+      case 'INTERESTED':
+        return const Color(0xFF00897B); // Teal
+      case 'NEUTRAL':
+        return AppColors.textSecondary;
+      case 'HESITANT':
+        return AppColors.warning;
+      case 'CRITICAL':
+        return AppColors.error;
+      default:
+        return AppColors.primaryDark;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final total = distribution.values.fold(0, (sum, val) => sum + val);
+
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: distribution.entries.map((entry) {
+              final pct = total > 0 ? (entry.value / total * 100).round() : 0;
+              final color = _getResponseColor(entry.key);
+              return Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                  border: Border.all(color: color.withOpacity(0.3)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      "${entry.key}: ${entry.value} ($pct%)",
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: color,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CategoryInvestmentsCard extends StatelessWidget {
+  final List<CategoryInvestmentItemModel> investments;
+
+  const _CategoryInvestmentsCard({required this.investments});
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      child: Column(
+        children: investments.map((item) {
+          final typeName = item.investmentType.replaceAll('_', ' ');
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        color: AppColors.primary,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      typeName,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      "(${item.count} items)",
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  "₹${NumberFormat('#,##,###.00').format(item.totalAmount)}",
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+class _TimeTrendsCard extends StatelessWidget {
+  final List<TimeTrendPointModel> trends;
+
+  const _TimeTrendsCard({required this.trends});
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      child: Column(
+        children: trends.map((t) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 75,
+                  child: Text(
+                    t.label,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      Text(
+                        "${t.visitsCount} visits",
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      Text(
+                        "Sales: ₹${NumberFormat('#,##,###').format(t.purchaseAmount)}",
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.success,
+                        ),
+                      ),
+                      Text(
+                        "Promo: ₹${NumberFormat('#,##,###').format(t.promoAmount)}",
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primaryDark,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
       ),
     );
   }
@@ -793,6 +1258,8 @@ class _DoctorRankRow extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
+                  const SizedBox(height: 2),
+                  _AttentionSignalsRow(signals: doctor.attentionSignals),
                 ],
               ),
             ),
@@ -819,6 +1286,70 @@ class _DoctorRankRow extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _AttentionSignalsRow extends StatelessWidget {
+  final List<String> signals;
+
+  const _AttentionSignalsRow({required this.signals});
+
+  @override
+  Widget build(BuildContext context) {
+    if (signals.isEmpty) return const SizedBox.shrink();
+
+    return Wrap(
+      spacing: 4,
+      runSpacing: 2,
+      children: signals.map((s) {
+        Color chipBg;
+        Color chipText;
+        String chipLabel;
+
+        switch (s) {
+          case 'NO_PURCHASE_RECENTLY':
+            chipBg = const Color(0xFFFFF3E0);
+            chipText = const Color(0xFFE65100);
+            chipLabel = "No Purchases";
+            break;
+          case 'HIGH_PROMO_SPEND':
+            chipBg = const Color(0xFFFFEBEE);
+            chipText = const Color(0xFFC62828);
+            chipLabel = "High Promo";
+            break;
+          case 'TOP_PRESCRIBER':
+            chipBg = AppColors.successLight;
+            chipText = AppColors.success;
+            chipLabel = "Top Prescriber";
+            break;
+          case 'PENDING_FOLLOWUP':
+            chipBg = AppColors.primaryLight;
+            chipText = AppColors.primaryDark;
+            chipLabel = "Follow-up Due";
+            break;
+          default:
+            chipBg = AppColors.background;
+            chipText = AppColors.textSecondary;
+            chipLabel = s;
+        }
+
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+          decoration: BoxDecoration(
+            color: chipBg,
+            borderRadius: BorderRadius.circular(AppRadius.xs),
+          ),
+          child: Text(
+            chipLabel,
+            style: TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w700,
+              color: chipText,
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 }

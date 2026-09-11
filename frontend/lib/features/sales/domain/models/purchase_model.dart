@@ -56,10 +56,13 @@ class PurchaseModel {
       doctorId: json['doctor_id']?.toString(),
       doctorName: json['doctor_name'] as String?,
       clinicName: json['clinic_name'] as String?,
-      purchaseDate: DateTime.tryParse(json['purchase_date']?.toString() ?? '') ??
+      purchaseDate:
+          DateTime.tryParse(json['purchase_date']?.toString() ?? '') ??
           DateTime.tryParse(json['sale_date']?.toString() ?? '') ??
           DateTime.now(),
-      purchaseAmount: parseDouble(json['purchase_amount'] ?? json['total_amount']),
+      purchaseAmount: parseDouble(
+        json['purchase_amount'] ?? json['total_amount'],
+      ),
       gstAmount: parseDouble(json['gst_amount']),
       totalAmount: parseDouble(json['total_amount']),
       ptsRate: parseDoubleOrNull(json['pts_rate']),
@@ -67,7 +70,8 @@ class PurchaseModel {
       notes: json['notes'] as String?,
       status: json['status'] as String? ?? "CONFIRMED",
       syncState: json['sync_state'] as String? ?? "synced",
-      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ??
+      createdAt:
+          DateTime.tryParse(json['created_at']?.toString() ?? '') ??
           DateTime.now(),
     );
   }

@@ -172,7 +172,7 @@ void main() {
       await tester.pumpWidget(createLoginScreen());
       await tester.pumpAndSettle();
 
-      expect(find.text("RG"), findsOneWidget);
+      expect(find.byType(Image), findsOneWidget);
       expect(find.text("HEALIX CRM"), findsOneWidget);
       expect(find.text("Field Sales & Doctor Management"), findsOneWidget);
       expect(find.text("Sign in to your account"), findsOneWidget);

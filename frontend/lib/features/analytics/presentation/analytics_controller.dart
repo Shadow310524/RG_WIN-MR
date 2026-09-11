@@ -10,6 +10,10 @@ class AnalyticsState {
   final OverallCommercialSummaryModel? overallSummary;
   final AreaCommercialSummaryModel? selectedAreaSummary;
   final bool isLoading;
+  final bool isCached;
+  final DateTime? lastUpdated;
+  final bool sortByPromoSpend;
+  final String? selectedCategory;
   final String? errorMessage;
 
   const AnalyticsState({
@@ -17,6 +21,10 @@ class AnalyticsState {
     this.overallSummary,
     this.selectedAreaSummary,
     this.isLoading = false,
+    this.isCached = false,
+    this.lastUpdated,
+    this.sortByPromoSpend = false,
+    this.selectedCategory,
     this.errorMessage,
   });
 
@@ -25,6 +33,10 @@ class AnalyticsState {
     OverallCommercialSummaryModel? overallSummary,
     AreaCommercialSummaryModel? selectedAreaSummary,
     bool? isLoading,
+    bool? isCached,
+    DateTime? lastUpdated,
+    bool? sortByPromoSpend,
+    String? selectedCategory,
     String? errorMessage,
   }) {
     return AnalyticsState(
@@ -32,6 +44,10 @@ class AnalyticsState {
       overallSummary: overallSummary ?? this.overallSummary,
       selectedAreaSummary: selectedAreaSummary ?? this.selectedAreaSummary,
       isLoading: isLoading ?? this.isLoading,
+      isCached: isCached ?? this.isCached,
+      lastUpdated: lastUpdated ?? this.lastUpdated,
+      sortByPromoSpend: sortByPromoSpend ?? this.sortByPromoSpend,
+      selectedCategory: selectedCategory ?? this.selectedCategory,
       errorMessage: errorMessage,
     );
   }
@@ -57,17 +73,34 @@ class AnalyticsController extends Notifier<AnalyticsState> {
     await loadAnalytics();
   }
 
+  void toggleSort() {
+    state = state.copyWith(sortByPromoSpend: !state.sortByPromoSpend);
+  }
+
+  void filterCategory(String? category) {
+    if (state.selectedCategory == category) {
+      state = state.copyWith(selectedCategory: null);
+    } else {
+      state = state.copyWith(selectedCategory: category);
+    }
+  }
+
   Future<void> loadAnalytics() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      final summary = await _repo.getOverallSummary(period: state.period);
-      if (summary != null) {
-        state = state.copyWith(overallSummary: summary, isLoading: false);
+      final result = await _repo.getOverallSummary(period: state.period);
+      if (result.summary != null) {
+        state = state.copyWith(
+          overallSummary: result.summary,
+          isCached: result.isCached,
+          lastUpdated: result.cachedTimestamp ?? DateTime.now(),
+          isLoading: false,
+        );
         return;
       }
     } catch (_) {}
 
-    // Fallback: derive client-side from available doctor & purchase state
+    // Fallback: derive client-side from available doctor, visit & purchase state
     _buildLocalFallback();
   }
 
@@ -93,6 +126,7 @@ class AnalyticsController extends Notifier<AnalyticsState> {
           .toList();
       double areaPurchases = 0.0;
       double areaInvestments = 0.0;
+      int areaPurchaseCount = 0;
       final docItems = <DoctorRankItemModel>[];
 
       for (final doc in areaDocs) {
@@ -102,9 +136,18 @@ class AnalyticsController extends Notifier<AnalyticsState> {
         final docInvest = investState.investments
             .where((i) => i.doctorId == doc.id)
             .fold(0.0, (acc, i) => acc + i.amount);
+        final pCount = purchaseState.purchases
+            .where((p) => p.doctorId == doc.id)
+            .length;
 
         areaPurchases += docPurchases;
         areaInvestments += docInvest;
+        areaPurchaseCount += pCount;
+
+        final signals = <String>[];
+        if (docInvest > 0 && docPurchases == 0) {
+          signals.add("HIGH_PROMO_SPEND");
+        }
 
         docItems.add(
           DoctorRankItemModel(
@@ -112,12 +155,13 @@ class AnalyticsController extends Notifier<AnalyticsState> {
             doctorName: doc.name,
             clinicName: doc.clinicName,
             specialization: doc.specialization,
+            areaId: area.id,
+            areaName: area.name,
             visitCount: 0,
-            purchaseCount: purchaseState.purchases
-                .where((p) => p.doctorId == doc.id)
-                .length,
+            purchaseCount: pCount,
             businessValue: docPurchases,
             promotionalInvestment: docInvest,
+            attentionSignals: signals,
           ),
         );
       }
@@ -129,6 +173,10 @@ class AnalyticsController extends Notifier<AnalyticsState> {
         areaName: area.name,
         areaCode: area.code,
         doctorCount: areaDocs.length,
+        purchaseCount: areaPurchaseCount,
+        avgPurchaseValue: areaPurchaseCount > 0
+            ? (areaPurchases / areaPurchaseCount)
+            : 0.0,
         businessValue: areaPurchases,
         promotionalInvestment: areaInvestments,
         doctors: docItems,
@@ -144,6 +192,11 @@ class AnalyticsController extends Notifier<AnalyticsState> {
     state = state.copyWith(
       overallSummary: OverallCommercialSummaryModel(
         period: state.period,
+        fieldActivity: FieldActivitySummaryModel(
+          totalDoctors: docState.doctors.length,
+          totalVisits: 0,
+          totalPurchases: purchaseState.purchases.length,
+        ),
         totalDoctors: docState.doctors.length,
         totalVisits: 0,
         totalPurchases: purchaseState.purchases.length,
@@ -152,12 +205,13 @@ class AnalyticsController extends Notifier<AnalyticsState> {
         areas: areaMap.values.toList(),
         topDoctors: topDoctors.take(10).toList(),
       ),
+      isCached: true,
+      lastUpdated: DateTime.now(),
       isLoading: false,
     );
   }
 
   Future<void> selectAreaForDrilldown(String areaId) async {
-    // Check if in current overall summary
     final existing = state.overallSummary?.areas.where(
       (a) => a.areaId == areaId,
     );
@@ -167,10 +221,17 @@ class AnalyticsController extends Notifier<AnalyticsState> {
     }
 
     try {
-      final areaSummary = await _repo.getAreaSummary(areaId);
+      final areaSummary = await _repo.getAreaSummary(
+        areaId,
+        period: state.period,
+      );
       if (areaSummary != null) {
         state = state.copyWith(selectedAreaSummary: areaSummary);
       }
     } catch (_) {}
+  }
+
+  void clearSelectedArea() {
+    state = state.copyWith(selectedAreaSummary: null);
   }
 }

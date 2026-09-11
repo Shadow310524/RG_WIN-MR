@@ -1,9 +1,22 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rgwin_crm/core/network/dio_client.dart';
 import 'package:rgwin_crm/core/storage/secure_storage.dart';
 import 'package:rgwin_crm/core/utils/numeric_utils.dart';
 import 'package:rgwin_crm/features/analytics/domain/models/analytics_models.dart';
+
+class AnalyticsFetchResult {
+  final OverallCommercialSummaryModel? summary;
+  final bool isCached;
+  final DateTime? cachedTimestamp;
+
+  const AnalyticsFetchResult({
+    this.summary,
+    this.isCached = false,
+    this.cachedTimestamp,
+  });
+}
 
 final analyticsRepositoryProvider = Provider<AnalyticsRepository>((ref) {
   return AnalyticsRepository();
@@ -23,12 +36,14 @@ class AnalyticsRepository {
   }
 
   Future<DoctorCommercialSummaryModel?> getDoctorSummary(
-    String doctorId,
-  ) async {
+    String doctorId, {
+    String period = 'all',
+  }) async {
     try {
       final options = await _authOptions();
       final response = await _dio.get(
         '/analytics/doctor/$doctorId',
+        queryParameters: {'period': period},
         options: options,
       );
       if (response.data is Map) {
@@ -36,17 +51,19 @@ class AnalyticsRepository {
           asStringKeyedMap(response.data),
         );
       }
-    } catch (_) {
-      // Offline fallback can be derived or null
-    }
+    } catch (_) {}
     return null;
   }
 
-  Future<AreaCommercialSummaryModel?> getAreaSummary(String areaId) async {
+  Future<AreaCommercialSummaryModel?> getAreaSummary(
+    String areaId, {
+    String period = 'all',
+  }) async {
     try {
       final options = await _authOptions();
       final response = await _dio.get(
         '/analytics/area/$areaId',
+        queryParameters: {'period': period},
         options: options,
       );
       if (response.data is Map) {
@@ -58,9 +75,12 @@ class AnalyticsRepository {
     return null;
   }
 
-  Future<OverallCommercialSummaryModel?> getOverallSummary({
+  Future<AnalyticsFetchResult> getOverallSummary({
     String period = 'this_month',
   }) async {
+    final cacheKey = 'analytics_overall_$period';
+    final timestampKey = 'analytics_overall_ts_$period';
+
     try {
       final options = await _authOptions();
       final response = await _dio.get(
@@ -69,11 +89,45 @@ class AnalyticsRepository {
         options: options,
       );
       if (response.data is Map) {
-        return OverallCommercialSummaryModel.fromJson(
+        final summary = OverallCommercialSummaryModel.fromJson(
           asStringKeyedMap(response.data),
         );
+        final now = DateTime.now();
+
+        // Persist to local cache asynchronously
+        try {
+          await _storage.write(cacheKey, jsonEncode(summary.toJson()));
+          await _storage.write(timestampKey, now.toIso8601String());
+        } catch (_) {}
+
+        return AnalyticsFetchResult(
+          summary: summary,
+          isCached: false,
+          cachedTimestamp: now,
+        );
       }
-    } catch (_) {}
-    return null;
+    } catch (_) {
+      // Network failure: Attempt to serve from offline cache
+      try {
+        final cachedJson = await _storage.read(cacheKey);
+        final tsStr = await _storage.read(timestampKey);
+        if (cachedJson != null && cachedJson.isNotEmpty) {
+          final decoded = jsonDecode(cachedJson);
+          if (decoded is Map) {
+            final summary = OverallCommercialSummaryModel.fromJson(
+              asStringKeyedMap(decoded),
+            );
+            final cachedTs = tsStr != null ? DateTime.tryParse(tsStr) : null;
+            return AnalyticsFetchResult(
+              summary: summary,
+              isCached: true,
+              cachedTimestamp: cachedTs,
+            );
+          }
+        }
+      } catch (_) {}
+    }
+
+    return const AnalyticsFetchResult(summary: null, isCached: false);
   }
 }

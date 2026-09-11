@@ -53,7 +53,9 @@ class PurchaseRepository {
             ptsValue: parseDoubleOrNull(json['pts_value']),
             status: json['status'] as String? ?? 'CONFIRMED',
             syncState: 'synced',
-            createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ?? DateTime.now(),
+            createdAt:
+                DateTime.tryParse(json['created_at']?.toString() ?? '') ??
+                DateTime.now(),
           );
         }).toList();
 

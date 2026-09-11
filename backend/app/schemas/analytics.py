@@ -1,4 +1,5 @@
 import uuid
+from datetime import date
 from decimal import Decimal
 from typing import Optional, List, Dict
 from pydantic import BaseModel, ConfigDict
@@ -18,6 +19,46 @@ class FigureProvenance(BaseModel):
     source: str
     status: str
     description: str
+
+
+class FieldActivitySummary(BaseModel):
+    total_doctors: int = 0
+    total_visits: int = 0
+    total_purchases: int = 0
+    pending_followups: int = 0
+
+
+class CategoryInvestmentItem(BaseModel):
+    investment_type: str
+    total_amount: Decimal = Decimal("0.00")
+    count: int = 0
+
+
+class TimeTrendPoint(BaseModel):
+    label: str
+    start_date: date
+    end_date: date
+    visits_count: int = 0
+    purchase_amount: Decimal = Decimal("0.00")
+    promo_amount: Decimal = Decimal("0.00")
+
+
+class DoctorRankItem(BaseModel):
+    doctor_id: uuid.UUID
+    doctor_name: str
+    clinic_name: Optional[str] = None
+    specialization: str
+    area_id: Optional[uuid.UUID] = None
+    area_name: Optional[str] = None
+    visit_count: int = 0
+    purchase_count: int = 0
+    business_value: Decimal = Decimal("0.00")
+    promotional_investment: Decimal = Decimal("0.00")
+    commercial_result: Optional[Decimal] = None
+    attention_signals: List[str] = []
+    last_visit_date: Optional[date] = None
+    last_purchase_date: Optional[date] = None
+    provenance: Dict[str, FigureProvenance] = {}
 
 
 class DoctorCommercialSummary(BaseModel):
@@ -42,23 +83,16 @@ class DoctorCommercialSummary(BaseModel):
     revenue: Optional[Decimal] = None
     commercial_result: Optional[Decimal] = None
 
+    # Intelligence & Attention Signals
+    attention_signals: List[str] = []
+    last_visit_date: Optional[date] = None
+    last_purchase_date: Optional[date] = None
+    response_distribution: Dict[str, int] = {}
+
     # Compact Promotional Investment History
     recent_investments: List[PromotionalInvestmentRead] = []
 
     # Financial Provenance Mapping
-    provenance: Dict[str, FigureProvenance] = {}
-
-
-class DoctorRankItem(BaseModel):
-    doctor_id: uuid.UUID
-    doctor_name: str
-    clinic_name: Optional[str] = None
-    specialization: str
-    visit_count: int = 0
-    purchase_count: int = 0
-    business_value: Decimal = Decimal("0.00")
-    promotional_investment: Decimal = Decimal("0.00")
-    commercial_result: Optional[Decimal] = None
     provenance: Dict[str, FigureProvenance] = {}
 
 
@@ -67,11 +101,17 @@ class AreaCommercialSummary(BaseModel):
     area_name: str
     area_code: str
     doctor_count: int = 0
+    visits_count: int = 0
+    purchase_count: int = 0
+    avg_purchase_value: Decimal = Decimal("0.00")
 
     # Aggregate Financials (derived purely from assigned doctors)
     business_value: Decimal = Decimal("0.00")
     promotional_investment: Decimal = Decimal("0.00")
     commercial_result: Optional[Decimal] = None
+
+    # Doctor Response Breakdown in Area
+    response_distribution: Dict[str, int] = {}
 
     # Doctors Drill-down (ranked by business_value descending)
     doctors: List[DoctorRankItem] = []
@@ -82,6 +122,7 @@ class AreaCommercialSummary(BaseModel):
 
 class OverallCommercialSummary(BaseModel):
     period: str  # today | this_week | this_month | all
+    field_activity: FieldActivitySummary = FieldActivitySummary()
     total_doctors: int = 0
     total_visits: int = 0
     total_purchases: int = 0
@@ -92,11 +133,20 @@ class OverallCommercialSummary(BaseModel):
     revenue: Optional[Decimal] = None  # Revenue unavailable
     profit_loss: Optional[Decimal] = None  # Insufficient data
 
+    # Response & Category Intelligence
+    response_distribution: Dict[str, int] = {}
+    category_investments: List[CategoryInvestmentItem] = []
+
+    # Time Trends (4 weeks)
+    trends: List[TimeTrendPoint] = []
+
     # Area Breakdown
     areas: List[AreaCommercialSummary] = []
 
-    # Top Performing Doctors across territory
+    # Filtered Doctor Lists
     top_doctors: List[DoctorRankItem] = []
+    high_promo_doctors: List[DoctorRankItem] = []
+    attention_doctors: List[DoctorRankItem] = []
 
     # Financial Provenance Mapping
     provenance: Dict[str, FigureProvenance] = {}

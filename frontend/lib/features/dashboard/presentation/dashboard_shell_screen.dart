@@ -59,7 +59,9 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen>
       ref.read(purchaseControllerProvider.notifier).loadPurchases();
       ref.read(doctorControllerProvider.notifier).loadInitialData();
       ref.read(followUpControllerProvider.notifier).loadFollowUps();
-      ref.read(promotionalInvestmentControllerProvider.notifier).loadInvestments();
+      ref
+          .read(promotionalInvestmentControllerProvider.notifier)
+          .loadInvestments();
       ref.read(analyticsControllerProvider.notifier).loadAnalytics();
     });
   }
@@ -150,7 +152,9 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen>
           ref.read(purchaseControllerProvider.notifier).loadPurchases(),
           ref.read(doctorControllerProvider.notifier).loadDoctors(),
           ref.read(followUpControllerProvider.notifier).loadFollowUps(),
-          ref.read(promotionalInvestmentControllerProvider.notifier).loadInvestments(),
+          ref
+              .read(promotionalInvestmentControllerProvider.notifier)
+              .loadInvestments(),
           ref.read(analyticsControllerProvider.notifier).loadAnalytics(),
         ]);
       },
@@ -266,24 +270,58 @@ class _DashboardShellScreenState extends ConsumerState<DashboardShellScreen>
             ),
           ],
         ),
-        const SizedBox(height: 8),
-        Text(
-          greetingTitle,
-          style: const TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w800,
-            color: AppColors.textPrimary,
-            letterSpacing: -0.5,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          greetingSubtitle,
-          style: const TextStyle(
-            fontSize: 13,
-            color: AppColors.textSecondary,
-            fontWeight: FontWeight.w500,
-          ),
+        const SizedBox(height: 12),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.asset(
+                'assets/images/logo.png',
+                width: 44,
+                height: 44,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.shield_outlined,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    greetingTitle,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    greetingSubtitle,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ],
     );

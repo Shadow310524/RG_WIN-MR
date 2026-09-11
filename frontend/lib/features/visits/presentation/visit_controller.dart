@@ -106,7 +106,8 @@ class VisitController extends Notifier<VisitState> {
           doctorResponse: json['doctor_response'] as String? ?? 'POSITIVE',
           prescriptionPotential:
               json['prescription_potential'] as String? ?? 'MEDIUM',
-          discussedProducts: json['doctor_feedback'] as String? ??
+          discussedProducts:
+              json['doctor_feedback'] as String? ??
               json['discussed_products'] as String?,
           samplesGiven: json['samples_given'] as String?,
           notes: json['notes'] as String?,
